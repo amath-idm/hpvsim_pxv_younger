@@ -299,10 +299,11 @@ def plot_vx_impact(location=None, scens=None, discounting=False):
         cancer_deaths_short_high = np.sum(np.array(df['cancer_deaths_high'])[ys:ye])
 
         ax3.scatter(xes[ib], cancer_deaths_short, color=colors[ib], marker='s', s=200)
-        ax3.set_ylabel('Cancer deaths (2025-2100')
+        ax3.set_ylabel('Cancer deaths (2025-2100)')
     for ax in [ax1, ax2, ax3, ax4]:
         ax.set_ylim(bottom=0)
         sc.SIticks(ax)
+    fig.suptitle(location.capitalize())
     ax1.legend()
     fig.tight_layout()
     fig_name = f'{figfolder}/{location}_vx_impact.png'
