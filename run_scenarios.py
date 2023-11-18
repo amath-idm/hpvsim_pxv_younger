@@ -212,7 +212,7 @@ if __name__ == '__main__':
             })
 
             vx_scens = sc.objdict({
-                # 'No vaccine': {},
+                'No vaccine': {},
                 'Vx, 50% cov, 9-14': dict(
                     vx_coverage=0.5,
                     age_range=(9, 14)
