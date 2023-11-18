@@ -217,6 +217,12 @@ if __name__ == '__main__':
                     vx_coverage=0.5,
                     age_range=(9, 14)
                 ),
+                'Vx, 50% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                    vx_coverage=0.5,
+                    age_range=(9, 14),
+                    infant=True,
+                    infant_efficacy=0.7
+                ),
                 'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
                     vx_coverage=0.5,
                     age_range=(9, 14),
@@ -235,140 +241,44 @@ if __name__ == '__main__':
 
     elif 'plot_scenarios' in to_run:
         locations = [
-            'india',  # 0
-            'indonesia',  # 1
+            # 'india',  # 0
+            # 'indonesia',  # 1
             'nigeria',  # 2
-            'tanzania',  # 3
-            'bangladesh',  # 4
-            'myanmar',  # 5
-            'uganda',  # 6
-            'ethiopia',  # 7
-            'drc',  # 8
+            # 'tanzania',  # 3
+            # 'bangladesh',  # 4
+            # 'myanmar',  # 5
+            # 'uganda',  # 6
+            # 'ethiopia',  # 7
+            # 'drc',  # 8
             # 'kenya'  # 9
         ]
 
         for location in locations:
-            ut.plot_txv_impact(
+            ut.plot_vx_impact(
                 location=location,
-                background_scens={
-                    '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-                    '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-                    '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
+                scens={
+                    '50% PxV, 9-14': {'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
+                    '50% PxV, 9-14\n90% infant cov, 50% eff': {'vx_scen': 'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy', 'screen_scen': 'No screening'},
+                    '50% PxV, 9-14\n90% infant cov, 20% eff': {'vx_scen': 'Vx, 50% cov, 9-14, 90% cov, infant, 20% efficacy', 'screen_scen': 'No screening'},
                 },
-                txvx_efficacies=['90/0', '70/30', '50/50', '90/50'],
-                txvx_ages=['30', '35', '40'],
             )
 
-        #     ut.make_sens(
-        #         location=location,
-        #         background_scens={
-        #             '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-        #             '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-        #             '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
-        #         },
-        #         txvx_efficacies=['90/0', '70/30', '50/50', '90/50'],
-        #         txvx_ages=['30', '35', '40'],
-        #         sensitivities=[', cross-protection', ', intro 2035', ', no durable immunity']
-        #     )
-        #
 
-        ut.plot_CEA(
-            locations=locations,
-            background_scens={
 
-                '90% PxV, 0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-                '90% PxV, 35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-                '90% PxV, 70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
-            },
-
-            txvx_scen='Mass TxV, 90/50, age 30',
-        )
-
-        ut.plot_VIMC_compare(
-            locations=locations,
-            scens=['Vx, 90% cov, 9-14', 'No screening', 'No TxV']
-        )
-        ut.compile_IPM_data(
-            locations=locations,
-            background_scens={
-                '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-                '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-                '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
-            },
-            txvx_scen='Mass TxV, 90/50, age 30',
-        )
-        ut.plot_outcomes(
-            locations=locations,
-            do_run=False
-        )
-
-        ut.plot_hpv_prevalence(
-            locations=locations,
-            do_run=False
-        )
-
-        ut.plot_hpv_progression(
-            locations=locations,
-            do_run=False
-        )
-        ut.make_sens_combined(
-            locations=locations,
-            background_scen={'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-            txvx_efficacy='90/50',
-            txvx_ages=['30', '35', '40'],
-            sensitivities=[', cross-protection',', intro 2035', ', no durable immunity']
-        )
-
-        ut.plot_residual_burden_combined(
-            locations=locations,
-            scens={
-                '90% PxV, 0% S&T': ['Vx, 90% cov, 9-14', 'No screening'],
-                '90% PxV, 35% S&T': ['Vx, 90% cov, 9-14', 'HPV, 35% sc cov'],
-                '90% PxV, 70% S&T': ['Vx, 90% cov, 9-14', 'HPV, 70% sc cov, 90% tx cov'],
-            }
-        )
-
-        # ut.plot_txv_impact_combined(
+        # ut.plot_CEA(
         #     locations=locations,
         #     background_scens={
-        #         '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-        #         '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-        #         '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
+        #
+        #         '90% PxV, 0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
+        #         '90% PxV, 35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
+        #         '90% PxV, 70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
         #     },
-        #     txvx_efficacies=['90/0', '70/30', '50/50', '90/50'],
-        #     txvx_ages=['30', '35', '40'],
+        #
+        #     txvx_scen='Mass TxV, 90/50, age 30',
         # )
-
-        ut.plot_txv_impact_combined_v2(
-            locations=locations,
-            background_scens={
-                '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-                '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-                '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
-            },
-            # txvx_efficacies=['90/0', '70/30', '50/50', '90/50'],
-            txvx_efficacies=['90/50'],
-            txvx_ages=['30'],#, '35', '40'],
-        )
-
-        ut.plot_natural_history(
-            locations=locations,
-            do_run=False
-        )
-
-        ut.plot_txv_impact_comparison(
-            locations=['nigeria', 'india'],
-            background_scens={
-                '90% PxV\n0% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'No screening'},
-                '90% PxV\n35% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 35% sc cov'},
-                '90% PxV\n70% S&T': {'vx_scen': 'Vx, 90% cov, 9-14', 'screen_scen': 'HPV, 70% sc cov, 90% tx cov'},
-            },
-            txvx_efficacies=['90/0', '70/30', '50/50', '90/50'],
-            txvx_ages=['30', '35', '40'],
-
-        )
-
-
-
-
+        #
+        #
+        #
+        #
+        #
         print('done')

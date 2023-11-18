@@ -228,7 +228,7 @@ def plot_VIMC_compare(locations=None, scens=None):
     return
 
 
-def plot_txv_impact(location=None, background_scens=None, txvx_ages=None, txvx_efficacies=None, discounting=False):
+def plot_vx_impact(location=None, scens=None, discounting=False):
 
     set_font(size=24)
 
@@ -239,153 +239,73 @@ def plot_txv_impact(location=None, background_scens=None, txvx_ages=None, txvx_e
     width = 0.1
     standard_le = 88.8
 
-    r1 = np.arange(len(background_scens))
-    r2 = [x + width for x in r1]
-    r3 = [x + width for x in r2]
-    r4 = [x + width for x in r3]
-    xes = [r1, r2, r3, r4]
+    xes = np.arange(len(scens))
+    fig = pl.figure(constrained_layout=True, figsize=(22, 16))
+    spec2 = GridSpec(ncols=3, nrows=2, figure=fig)
+    ax1 = fig.add_subplot(spec2[0, :])
+    ax2 = fig.add_subplot(spec2[1,0])
+    ax3 = fig.add_subplot(spec2[1,1])
+    ax4 = fig.add_subplot(spec2[1,2])
 
-    markers = ['s', 'v', 'P', '*', '+', 'D', '^', 'x']
-
-    fig, axes = pl.subplots(2, 2, figsize=(16, 16))
-    for ib, (background_scen_label, background_scen) in enumerate(background_scens.items()):
+    for ib, (scen_label, background_scen) in enumerate(scens.items()):
         vx_scen_label = background_scen['vx_scen']
         screen_scen_label = background_scen['screen_scen']
-        NoTxV_df = bigdf[(bigdf.screen_scen == screen_scen_label) & (bigdf.vx_scen == vx_scen_label)
-                         & (bigdf.txvx_scen == 'No TxV')].groupby('year')[
-            ['cancers', 'cancers_low', 'cancers_high', 'cancer_deaths', 'cancer_deaths_low', 'cancer_deaths_high',
-             'n_tx_vaccinated']].sum()
+        df = bigdf[(bigdf.screen_scen == screen_scen_label) & (bigdf.vx_scen == vx_scen_label)].groupby('year')[
+            ['asr_cancer_incidence', 'asr_cancer_incidence_low', 'asr_cancer_incidence_high',
+             'cancers', 'cancers_low', 'cancers_high', 'cancer_deaths', 'cancer_deaths_low', 'cancer_deaths_high']].sum()
 
-        NoTxV_econdf_cancers = econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)
-                                      & (econdf.txvx_scen == 'No TxV')].groupby('year')[
+        econdf_cancers = econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)].groupby('year')[
             ['new_cancers', 'new_cancer_deaths']].sum()
 
-        NoTxV_econdf = econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)
-                              & (econdf.txvx_scen == 'No TxV')].groupby('year')[
+        econdf_ages = econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)].groupby('year')[
             ['av_age_cancer_deaths', 'av_age_cancers']].mean()
 
         if discounting:
-            cancers = np.array([i / 1.03 ** t for t, i in enumerate(NoTxV_econdf_cancers['new_cancers'].values)])
-            cancer_deaths = np.array([i / 1.03 ** t for t, i in enumerate(NoTxV_econdf_cancers['new_cancer_deaths'].values)])
+            cancers = np.array([i / 1.03 ** t for t, i in enumerate(econdf_cancers['new_cancers'].values)])
+            cancer_deaths = np.array([i / 1.03 ** t for t, i in enumerate(econdf_cancers['new_cancer_deaths'].values)])
         else:
-            cancers = NoTxV_econdf_cancers['new_cancers'].values
-            cancer_deaths = NoTxV_econdf_cancers['new_cancer_deaths'].values
+            cancers = econdf_cancers['new_cancers'].values
+            cancer_deaths = econdf_cancers['new_cancer_deaths'].values
 
-        avg_age_ca_death = np.mean(NoTxV_econdf['av_age_cancer_deaths'])
-        avg_age_ca = np.mean(NoTxV_econdf['av_age_cancers'])
+        avg_age_ca_death = np.mean(econdf_ages['av_age_cancer_deaths'])
+        avg_age_ca = np.mean(econdf_ages['av_age_cancers'])
         ca_years = avg_age_ca_death - avg_age_ca
         yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
         yll = np.sum((standard_le-avg_age_ca_death) * cancer_deaths)
-        daly_noTxV = yll + yld
+        dalys = yll + yld
 
-        ys = sc.findinds(NoTxV_df.index, 2030)[0]
-        ye = sc.findinds(NoTxV_df.index, 2060)[0]
+        ax4.scatter(xes[ib], dalys, color=colors[ib], marker='s', s=200)
+        ax4.set_ylabel('DALYs (2025-2100')
 
-        NoTxV_cancers = np.sum(np.array(NoTxV_df['cancers'])[ys:ye])
-        NoTxV_cancers_low = np.sum(np.array(NoTxV_df['cancers_low'])[ys:ye])
-        NoTxV_cancers_high = np.sum(np.array(NoTxV_df['cancers_high'])[ys:ye])
+        ys = sc.findinds(df.index, 2025)[0]
+        ye = sc.findinds(df.index, 2100)[0]
+        years = df.index[ys:ye]
+        cancer_ts = np.array(df['asr_cancer_incidence'])[ys:ye]
+        cancer_ts_low = np.array(df['asr_cancer_incidence_low'])[ys:ye]
+        cancer_ts_high = np.array(df['asr_cancer_incidence_high'])[ys:ye]
 
-        NoTxV_cancer_deaths_short = np.sum(np.array(NoTxV_df['cancer_deaths'])[ys:ye])
-        NoTxV_cancer_deaths_short_low = np.sum(np.array(NoTxV_df['cancer_deaths_low'])[ys:ye])
-        NoTxV_cancer_deaths_short_high = np.sum(np.array(NoTxV_df['cancer_deaths_high'])[ys:ye])
+        ax1.plot(years, cancer_ts, color=colors[ib], label=scen_label)
+        ax1.fill_between(years, cancer_ts_low, cancer_ts_high, color=colors[ib], alpha=0.3)
 
-        for i_eff, txvx_efficacy in enumerate(txvx_efficacies):
-            for i_age, txvx_age in enumerate(txvx_ages):
-                txvx_scen_label_age = f'Mass TxV, {txvx_efficacy}, age {txvx_age}'
+        cancers = np.sum(np.array(df['cancers'])[ys:ye])
+        cancers_low = np.sum(np.array(df['cancers_low'])[ys:ye])
+        cancers_high = np.sum(np.array(df['cancers_high'])[ys:ye])
 
-                TxV_df = bigdf[(bigdf.screen_scen == screen_scen_label) & (bigdf.vx_scen == vx_scen_label)
-                               & (bigdf.txvx_scen == txvx_scen_label_age)].groupby(
-                    'year')[
-                    ['asr_cancer_incidence', 'asr_cancer_incidence_low', 'asr_cancer_incidence_high',
-                     'cancers', 'cancers_low', 'cancers_high', 'cancer_deaths', 'cancer_deaths_low', 'cancer_deaths_high', 'n_tx_vaccinated']].sum()
+        ax2.scatter(xes[ib], cancers, color=colors[ib], marker='s', s=200)
+        ax2.set_ylabel('Cancers (2025-2100')
 
-                TxV_econdf_cancers = \
-                econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)
-                       & (econdf.txvx_scen == txvx_scen_label_age)].groupby('year')[
-                    ['new_cancers', 'new_cancer_deaths']].sum()
+        cancer_deaths_short = np.sum(np.array(df['cancer_deaths'])[ys:ye])
+        cancer_deaths_short_low = np.sum(np.array(df['cancer_deaths_low'])[ys:ye])
+        cancer_deaths_short_high = np.sum(np.array(df['cancer_deaths_high'])[ys:ye])
 
-                TxV_econdf = econdf[(econdf.screen_scen == screen_scen_label) & (econdf.vx_scen == vx_scen_label)
-                                    & (econdf.txvx_scen == txvx_scen_label_age)].groupby('year')[
-                    ['av_age_cancer_deaths', 'av_age_cancers']].mean()
-
-                if discounting:
-                    cancers = np.array([i / 1.03 ** t for t, i in enumerate(TxV_econdf_cancers['new_cancers'].values)])
-                    cancer_deaths = np.array(
-                        [i / 1.03 ** t for t, i in enumerate(TxV_econdf_cancers['new_cancer_deaths'].values)])
-                else:
-                    cancers = TxV_econdf_cancers['new_cancers'].values
-                    cancer_deaths = TxV_econdf_cancers['new_cancer_deaths'].values
-
-                avg_age_ca_death = np.mean(TxV_econdf['av_age_cancer_deaths'])
-                avg_age_ca = np.mean(TxV_econdf['av_age_cancers'])
-                ca_years = avg_age_ca_death - avg_age_ca
-                yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
-                yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
-                daly_TxV = yll + yld
-                dalys_averted = daly_noTxV - daly_TxV
-                best_TxV_cancers_short = np.sum(np.array(TxV_df['cancers'])[ys:ye])
-                averted_cancers_short = NoTxV_cancers - best_TxV_cancers_short
-                perc_cancers_averted_short = 100 * averted_cancers_short / NoTxV_cancers
-                to_plot_short = perc_cancers_averted_short
-
-                TxV_cancers = np.sum(np.array(TxV_df['cancers'])[ys:ye])
-                TxV_cancers_low = np.sum(np.array(TxV_df['cancers_low'])[ys:ye])
-                TxV_cancers_high = np.sum(np.array(TxV_df['cancers_high'])[ys:ye])
-
-                best_TxV_cancer_deaths_short = np.sum(np.array(TxV_df['cancer_deaths'])[ys:ye])
-                best_TxV_cancer_deaths_short_high = np.sum(np.array(TxV_df['cancer_deaths_high'])[ys:ye])
-                best_TxV_cancer_deaths_short_low = np.sum(np.array(TxV_df['cancer_deaths_low'])[ys:ye])
-
-                averted_cancer_deaths_short = NoTxV_cancer_deaths_short - best_TxV_cancer_deaths_short
-                averted_cancer_deaths_short_high = NoTxV_cancer_deaths_short_high - best_TxV_cancer_deaths_short_high
-                averted_cancer_deaths_short_low = NoTxV_cancer_deaths_short_low - best_TxV_cancer_deaths_short_low
-
-                TxV_cancers_averted = NoTxV_cancers - TxV_cancers
-
-                if i_eff + ib == 0:
-                    axes[0,0].scatter(xes[i_eff][ib], TxV_cancers_averted, marker=markers[i_age], color=colors[i_eff],
-                                    s=300, label=f'Age {txvx_age}')
-                else:
-                    axes[0,0].scatter(xes[i_eff][ib], TxV_cancers_averted, marker=markers[i_age], color=colors[i_eff],
-                                    s=300)
-                if ib + i_age == 0:
-                    axes[0,1].scatter(xes[i_eff][ib], to_plot_short, marker=markers[i_age], color=colors[i_eff], s=300,
-                                       label=txvx_efficacy)
-                else:
-                    axes[0,1].scatter(xes[i_eff][ib], to_plot_short, marker=markers[i_age], color=colors[i_eff], s=300)
-                axes[1,0].scatter(xes[i_eff][ib], averted_cancer_deaths_short, marker=markers[i_age], color=colors[i_eff], s=300)
-                axes[1,1].scatter(xes[i_eff][ib], dalys_averted, marker=markers[i_age], color=colors[i_eff], s=300)
-
-        ib_labels = background_scens.keys()
-
-        axes[1,0].set_xticks([r + 1.5*width for r in range(len(r1))], ib_labels)
-        axes[1,1].set_xticks([r + 1.5 * width for r in range(len(r1))], ib_labels)
-        axes[0,0].get_xaxis().set_visible(False)
-        axes[0,1].get_xaxis().set_visible(False)
-    axes[0,0].set_ylim(bottom=0)
-    axes[0, 1].set_ylim(bottom=0)
-    axes[1, 0].set_ylim(bottom=0)
-    axes[1, 1].set_ylim(bottom=0)
-    sc.SIticks(axes[0,0])
-    sc.SIticks(axes[0,1])
-    sc.SIticks(axes[1,0])
-    sc.SIticks(axes[1,1])
-
-    axes[0,0].set_ylabel(f'Cervical cancer cases averted (2030-2060)')
-    axes[0,1].set_ylabel(f'Percent cervical cancer cases averted (2030-2060)')
-    axes[1,0].set_ylabel(f'Deaths averted')
-    axes[1,1].set_ylabel(f'DALYs averted')
-
-    # axes[1].set_ylim([0, 30])
-    axes[0,0].legend(title='Age of TxV')
-    axes[0,1].legend(title='TxV Effectiveness')
-    fig.suptitle(f'{location.capitalize()}')
-
-    # axes[1].set_xlabel('Background intervention scenario')
-    axes[1,0].set_xlabel('Background intervention scenario')
-    axes[1, 1].set_xlabel('Background intervention scenario')
+        ax3.scatter(xes[ib], cancer_deaths_short, color=colors[ib], marker='s', s=200)
+        ax3.set_ylabel('Cancer deaths (2025-2100')
+    for ax in [ax1, ax2, ax3, ax4]:
+        ax.set_ylim(bottom=0)
+        sc.SIticks(ax)
+    ax1.legend()
     fig.tight_layout()
-    fig_name = f'{figfolder}/{location}_txv_impact.png'
+    fig_name = f'{figfolder}/{location}_vx_impact.png'
     fig.savefig(fig_name, dpi=100)
 
     return
