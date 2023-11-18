@@ -31,8 +31,8 @@ import analyzers as an
 
 # Comment out to not run
 to_run = [
-    'run_scenarios',
-    # 'plot_scenarios'
+    # 'run_scenarios',
+    'plot_scenarios'
 ]
 
 # Comment out locations to not run
@@ -290,13 +290,9 @@ if __name__ == '__main__':
         for location in locations:
             ut.plot_vx_impact(
                 location=location,
-                scens={
-                    'No vaccine': {'vx_scen': 'No vaccine', 'screen_scen': 'No screening'},
-                    '50% PxV, 9-14': {'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
-                    '50% PxV, 9-14\n90% infant cov, 70% eff': {'vx_scen': 'Vx, 50% cov, 9-14, 90% cov, infant, 70% efficacy', 'screen_scen': 'No screening'},
-                    '50% PxV, 9-14\n90% infant cov, 50% eff': {'vx_scen': 'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy', 'screen_scen': 'No screening'},
-                    '50% PxV, 9-14\n90% infant cov, 20% eff': {'vx_scen': 'Vx, 50% cov, 9-14, 90% cov, infant, 20% efficacy', 'screen_scen': 'No screening'},
-                },
+                background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
+                infant_efficacies=[30, 50, 70, 90],
+                infant_coverages=[70, 90]
             )
 
 
