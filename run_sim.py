@@ -152,22 +152,6 @@ def run_sims(
     return sims
 
 
-def run_parsets(
-        location=None, debug=False, verbose=.1, analyzers=None, save_results=True, **kwargs):
-    ''' Run multiple simulations in parallel '''
-
-    dflocation = location.replace(' ', '_')
-    parsets = sc.loadobj(f'results/immunovarying/{dflocation}_pars_jun15_iv_all.obj')
-    kwargs = sc.mergedicts(dict(location=location, debug=debug, verbose=verbose, analyzers=analyzers), kwargs)
-    simlist = sc.parallelize(run_sim, iterkwargs=dict(calib_pars=parsets), kwargs=kwargs, serial=debug, die=True)
-    msim = hpv.MultiSim(simlist)
-    msim.reduce()
-    if save_results:
-        sc.saveobj(f'results/msims/{dflocation}.obj', msim.results)
-
-    return msim
-
-
 # %% Run as a script
 if __name__ == '__main__':
     T = sc.timer()

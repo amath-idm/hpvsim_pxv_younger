@@ -405,7 +405,7 @@ class econ_analyzer(hpv.Analyzer):
 
     def initialize(self, sim):
         super().initialize(sim)
-        columns = ['new_hpv_screens', 'new_vaccinations', 'new_tx_vaccinations',
+        columns = ['new_hpv_screens', 'new_vaccinations', 'new_infant_vaccinations',
                    'new_thermal_ablations', 'new_leeps', 'new_cancer_treatments',
                    'new_cancers', 'new_cancer_deaths', 'new_other_deaths',
                    'av_age_cancers', 'av_age_cancer_deaths', 'av_age_other_deaths']
@@ -428,7 +428,6 @@ class econ_analyzer(hpv.Analyzer):
             simvals = sim.meta.vals
             screen_scen_label = simvals.screen_scen
             vx_scen_label = simvals.vx_scen
-            txvx_scen_label = simvals.txvx_scen
             if screen_scen_label != 'No screening':
                 # Resources
                 self.df.loc[li].new_hpv_screens += sim.get_intervention('screening').n_products_used.values[ltt]
@@ -441,12 +440,8 @@ class econ_analyzer(hpv.Analyzer):
                 self.df.loc[li].new_vaccinations += sim.get_intervention('Routine vx').n_products_used.values[ltt]
                 self.df.loc[li].new_vaccinations += sim.get_intervention('Catchup vx').n_products_used.values[ltt]
 
-            if txvx_scen_label != 'No TxV':
-                # Resources
-                self.df.loc[li].new_tx_vaccinations += sim.get_intervention('campaign txvx').n_products_used.values[ltt]
-                self.df.loc[li].new_tx_vaccinations += sim.get_intervention('campaign txvx 2nd dose').n_products_used.values[ltt]
-                self.df.loc[li].new_tx_vaccinations += sim.get_intervention('routine txvx').n_products_used.values[ltt]
-                self.df.loc[li].new_tx_vaccinations += sim.get_intervention('routine txvx 2nd dose').n_products_used.values[ltt]
+                if 'infant' in vx_scen_label:
+                    self.df.loc[li].new_infant_vaccinations += sim.get_intervention('Infant vx').n_products_used.values[ltt]
 
             # Age outputs
             self.df.loc[li].av_age_other_deaths = av_age(ppl.date_dead_other == lt)

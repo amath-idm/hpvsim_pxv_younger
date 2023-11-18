@@ -18,14 +18,24 @@ def get_vx_intvs(start_year=2025, vx_coverage=0.9, age_range=(9,14), product='no
     prod = hpv.default_vx(prod_name=product)
     eligibility = lambda sim: (sim.people.vx_doses == 0)
 
-    routine_vx = hpv.routine_vx(
-        prob=vx_coverage,
-        start_year=start_year,
-        product=prod,
-        age_range=routine_age,
-        eligibility=eligibility,
-        label='Routine vx'
-    )
+    if infant:
+        routine_vx = hpv.routine_vx(
+            prob=vx_coverage,
+            years=[start_year,start_year+9],
+            product=prod,
+            age_range=routine_age,
+            eligibility=eligibility,
+            label='Routine vx'
+        )
+    else:
+        routine_vx = hpv.routine_vx(
+            prob=vx_coverage,
+            start_year=start_year,
+            product=prod,
+            age_range=routine_age,
+            eligibility=eligibility,
+            label='Routine vx'
+        )
 
     catchup_vx = hpv.campaign_vx(
         prob=vx_coverage,

@@ -31,8 +31,8 @@ import analyzers as an
 
 # Comment out to not run
 to_run = [
-    # 'run_scenarios',
-    'plot_scenarios'
+    'run_scenarios',
+    # 'plot_scenarios'
 ]
 
 # Comment out locations to not run
@@ -69,7 +69,7 @@ def make_msims(sims, use_mean=True):
         assert i_vx == sim.meta.inds[1]
         assert (s == 0) or i_s != sim.meta.inds[2]
     msim.meta = sc.objdict()
-    msim.meta.inds = [i_sc, i_vx, i_tx]
+    msim.meta.inds = [i_sc, i_vx]
     msim.meta.vals = sc.dcp(sims[0].meta.vals)
     msim.meta.vals.pop('seed')
 
@@ -109,7 +109,7 @@ def run_scens(location=None, screen_intvs=None, vx_intvs=None, # Input data
     sc.heading(f'Running {len(ikw)} scenario sims...')
     calib_pars = sc.loadobj(f'results/{location}_pars{calib_filestem}.obj')
     kwargs = dict(calib_pars=calib_pars, verbose=verbose, debug=debug, location=location,
-                  econ_analyzer=True, end=2060, n_agents=50e3)
+                  econ_analyzer=True, end=2100, n_agents=50e3)
     n_workers = 40
     all_sims = sc.parallelize(rs.run_sim, iterkwargs=ikw, kwargs=kwargs, ncpus=n_workers)
 
@@ -152,21 +152,12 @@ def run_scens(location=None, screen_intvs=None, vx_intvs=None, # Input data
         df['cancers']                   = msim.results['cancers'][:] # TODO: process in a loop
         df['cancers_low']               = msim.results['cancers'].low
         df['cancers_high']              = msim.results['cancers'].high
-        df['cancer_incidence']          = msim.results['cancer_incidence'][:]
-        df['cancer_incidence_high']     = msim.results['cancer_incidence'].high
-        df['cancer_incidence_low']      = msim.results['cancer_incidence'].low
         df['asr_cancer_incidence']      = msim.results['asr_cancer_incidence'][:]
         df['asr_cancer_incidence_low']  = msim.results['asr_cancer_incidence'].low
         df['asr_cancer_incidence_high'] = msim.results['asr_cancer_incidence'].high
         df['cancer_deaths']             = msim.results['cancer_deaths'][:]
         df['cancer_deaths_low']         = msim.results['cancer_deaths'].low
         df['cancer_deaths_high']        = msim.results['cancer_deaths'].high
-        df['n_screened']                = msim.results['n_screened'][:]
-        df['n_screened_low']            = msim.results['n_screened'].low
-        df['n_screened_high']           = msim.results['n_screened'].high
-        df['n_cin_treated']             = msim.results['n_cin_treated'][:]
-        df['n_cin_treated_low']         = msim.results['n_cin_treated'].low
-        df['n_cin_treated_high']        = msim.results['n_cin_treated'].high
         df['n_vaccinated']              = msim.results['n_vaccinated'][:]
         df['n_vaccinated_low']          = msim.results['n_vaccinated'].low
         df['n_vaccinated_high']         = msim.results['n_vaccinated'].high
@@ -209,15 +200,15 @@ if __name__ == '__main__':
             # TxVx                   : No txvx, use case 1 w/ different efficacy values
             screen_scens = sc.objdict({
                 'No screening': {},
-                'HPV, 35% sc cov': dict(
-                    primary='hpv',
-                    screen_coverage=0.35,
-                ),
-                'HPV, 70% sc cov, 90% tx cov': dict(
-                    primary='hpv',
-                    screen_coverage=0.7,
-                    ltfu=0.1
-                ),
+                # 'HPV, 35% sc cov': dict(
+                #     primary='hpv',
+                #     screen_coverage=0.35,
+                # ),
+                # 'HPV, 70% sc cov, 90% tx cov': dict(
+                #     primary='hpv',
+                #     screen_coverage=0.7,
+                #     ltfu=0.1
+                # ),
             })
 
             vx_scens = sc.objdict({
@@ -226,9 +217,16 @@ if __name__ == '__main__':
                     vx_coverage=0.5,
                     age_range=(9, 14)
                 ),
-                'Vx, 90% cov, 9-14': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14)
+                'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                    vx_coverage=0.5,
+                    age_range=(9, 14),
+                    infant=True,
+                ),
+                'Vx, 50% cov, 9-14, 90% cov, infant, 20% efficacy': dict(
+                    vx_coverage=0.5,
+                    age_range=(9, 14),
+                    infant=True,
+                    infant_efficacy=0.2
                 ),
             })
 
