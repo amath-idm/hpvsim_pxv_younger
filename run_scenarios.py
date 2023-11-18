@@ -37,15 +37,15 @@ to_run = [
 
 # Comment out locations to not run
 locations = [
-    'india',        # 0
-    'indonesia',    # 1
+    # 'india',        # 0
+    # 'indonesia',    # 1
     'nigeria',      # 2
-    'tanzania',     # 3
-    'bangladesh',   # 4
-    'myanmar',      # 5
-    'uganda',       # 6
-    'ethiopia',     # 7
-    'drc',          # 8
+    # 'tanzania',     # 3
+    # 'bangladesh',   # 4
+    # 'myanmar',      # 5
+    # 'uganda',       # 6
+    # 'ethiopia',     # 7
+    # 'drc',          # 8
     # 'kenya'         # 9
 ]
 
