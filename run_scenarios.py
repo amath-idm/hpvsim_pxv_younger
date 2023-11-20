@@ -273,7 +273,7 @@ if __name__ == '__main__':
                     infant=True,
                     infant_efficacy=0.7
                 ),
-                'Vx, 6% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                'Vx, 60% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
                     vx_coverage=0.6,
                     age_range=(9, 14),
                     infant=True,
@@ -301,9 +301,10 @@ if __name__ == '__main__':
         for location in locations:
             ut.plot_vx_impact(
                 location=location,
-                background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
-                infant_efficacies=[30, 50, 70, 90],
-                infant_coverages=[70, 90]
+                background_scen={'screen_scen': 'No screening'},
+                adolescent_coverages=[20, 40, 60],
+                infant_efficacies=[50, 70, 90],
+                infant_coverage=90
             )
 
             # ut.plot_CEA(
