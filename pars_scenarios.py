@@ -24,7 +24,7 @@ def get_vx_intvs(start_year=2025, vx_coverage=0.9, age_range=(9,14), product='no
             years=[start_year,start_year+9],
             product=prod,
             age_range=routine_age,
-            eligibility=eligibility,
+            # eligibility=eligibility,
             label='Routine vx'
         )
     else:
@@ -33,7 +33,7 @@ def get_vx_intvs(start_year=2025, vx_coverage=0.9, age_range=(9,14), product='no
             start_year=start_year,
             product=prod,
             age_range=routine_age,
-            eligibility=eligibility,
+            # eligibility=eligibility,
             label='Routine vx'
         )
 
@@ -42,7 +42,7 @@ def get_vx_intvs(start_year=2025, vx_coverage=0.9, age_range=(9,14), product='no
         years=start_year,
         product=prod,
         age_range=catchup_age,
-        eligibility=eligibility,
+        # eligibility=eligibility,
         label='Catchup vx'
     )
 

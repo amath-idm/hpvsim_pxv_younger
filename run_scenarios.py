@@ -31,8 +31,8 @@ import analyzers as an
 
 # Comment out to not run
 to_run = [
-    # 'run_scenarios',
-    'plot_scenarios'
+    'run_scenarios',
+    # 'plot_scenarios'
 ]
 
 # Comment out locations to not run
@@ -212,7 +212,7 @@ if __name__ == '__main__':
             })
 
             vx_scens = sc.objdict({
-                # 'No vaccine': {},
+                'No vaccine': {},
                 'Vx, 50% cov, 9-14': dict(
                     vx_coverage=0.5,
                     age_range=(9, 14)
@@ -289,6 +289,20 @@ if __name__ == '__main__':
 
         for location in locations:
             ut.plot_vx_impact(
+                location=location,
+                background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
+                infant_efficacies=[30, 50, 70, 90],
+                infant_coverages=[70, 90]
+            )
+
+            ut.plot_CEA(
+                location=location,
+                background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
+                infant_efficacies=[30, 50, 70, 90],
+                infant_coverages=[70, 90]
+            )
+
+            ut.plot_resource_use(
                 location=location,
                 background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
                 infant_efficacies=[30, 50, 70, 90],

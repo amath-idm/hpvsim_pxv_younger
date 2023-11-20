@@ -256,17 +256,15 @@ def plot_vx_impact(location=None, background_scen=None, infant_coverages=None,
 
     return
 
-def plot_CEA(locations=None, background_scens=None, txvx_scen=None, discounting=False):
+def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_efficacies=None, discounting=False):
 
     set_font(size=24)
-    econdfs = sc.autolist()
-    for location in locations:
-        econdf = sc.loadobj(f'{resfolder}/{location}_econ.obj')
-        econdfs += econdf
-    econ_df = pd.concat(econdfs)
+
+    econ_df = sc.loadobj(f'{resfolder}/{location}_econ.obj')
 
     cost_dict = dict(
-        txv=8,
+        adolescent_pxv=9,
+        infant_pxv=5,
         leep=41.76,
         ablation=11.76,
         cancer=450
@@ -274,104 +272,147 @@ def plot_CEA(locations=None, background_scens=None, txvx_scen=None, discounting=
 
     standard_le = 88.8
     colors = sc.gridcolors(20)
-
+    markers = ['s', 'p']
     fig, ax = pl.subplots(figsize=(12, 12))
-    for ib, (background_scen_label, background_scen) in enumerate(background_scens.items()):
-        vx_scen_label = background_scen['vx_scen']
-        screen_scen_label = background_scen['screen_scen']
-        dalys_noTxV = 0
-        dalys_TxV = 0
-        cost_noTxV = 0
-        cost_TxV = 0
-        for location in locations:
-            NoTxV_econdf_counts = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)
-                                   & (econ_df.txvx_scen == 'No TxV') & (econ_df.location == location)].groupby('year')[
-                ['new_tx_vaccinations', 'new_thermal_ablations', 'new_leeps',
+    vx_scen_label = background_scen['vx_scen']
+    screen_scen_label = background_scen['screen_scen']
+    no_infant_econdf_counts = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
+        'year')[
+        ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
+         'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
+
+    no_infant_econdf_means = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
+        'year')[
+        ['av_age_cancer_deaths', 'av_age_cancers']].mean()
+
+    if discounting:
+        cancers = np.array([i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancers'].values)])
+        cancer_deaths = np.array(
+            [i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancer_deaths'].values)])
+    else:
+        cancers = no_infant_econdf_counts['new_cancers'].values
+        cancer_deaths = no_infant_econdf_counts['new_cancer_deaths'].values
+    avg_age_ca_death = np.mean(no_infant_econdf_means['av_age_cancer_deaths'])
+    avg_age_ca = np.mean(no_infant_econdf_means['av_age_cancers'])
+    ca_years = avg_age_ca_death - avg_age_ca
+    yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
+    yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
+    daly_no_infant = yll + yld
+    total_cost_no_infant = (no_infant_econdf_counts['new_vaccinations'].values * cost_dict['adolescent_pxv']) + \
+                       (no_infant_econdf_counts['new_thermal_ablations'].values * cost_dict['ablation']) + \
+                       (no_infant_econdf_counts['new_leeps'].values * cost_dict['leep']) + \
+                       (no_infant_econdf_counts['new_cancer_treatments'].values * cost_dict['cancer'])
+    if discounting:
+        cost_no_infant = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_no_infant)])
+    else:
+        cost_no_infant = np.sum(total_cost_no_infant)
+
+    for icov, inf_coverage in enumerate(infant_coverages):
+        for ieff, inf_efficacy in enumerate(infant_efficacies):
+            vx_scen_label_to_use = f'{vx_scen_label}, {inf_coverage}% cov, infant, {inf_efficacy}% efficacy'
+
+            econdf_cancers = \
+            econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
+                ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
                  'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
 
-            NoTxV_econdf_means = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)
-                                   & (econ_df.txvx_scen == 'No TxV') & (econ_df.location == location)].groupby('year')[
+            econdf_ages = \
+            econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
                 ['av_age_cancer_deaths', 'av_age_cancers']].mean()
 
+
             if discounting:
-                cancers = np.array([i / 1.03 ** t for t, i in enumerate(NoTxV_econdf_counts['new_cancers'].values)])
+                cancers = np.array([i / 1.03 ** t for t, i in enumerate(econdf_cancers['new_cancers'].values)])
                 cancer_deaths = np.array(
-                    [i / 1.03 ** t for t, i in enumerate(NoTxV_econdf_counts['new_cancer_deaths'].values)])
+                    [i / 1.03 ** t for t, i in enumerate(econdf_cancers['new_cancer_deaths'].values)])
             else:
-                cancers = NoTxV_econdf_counts['new_cancers'].values
-                cancer_deaths = NoTxV_econdf_counts['new_cancer_deaths'].values
-            avg_age_ca_death = np.mean(NoTxV_econdf_means['av_age_cancer_deaths'])
-            avg_age_ca = np.mean(NoTxV_econdf_means['av_age_cancers'])
+                cancers = econdf_cancers['new_cancers'].values
+                cancer_deaths = econdf_cancers['new_cancer_deaths'].values
+            avg_age_ca_death = np.mean(econdf_ages['av_age_cancer_deaths'])
+            avg_age_ca = np.mean(econdf_ages['av_age_cancers'])
             ca_years = avg_age_ca_death - avg_age_ca
             yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
             yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
-            daly_noTxV = yll + yld
-            dalys_noTxV += daly_noTxV
-            total_cost_noTxV = (NoTxV_econdf_counts['new_tx_vaccinations'].values * cost_dict['txv']) + \
-                               (NoTxV_econdf_counts['new_thermal_ablations'].values * cost_dict['ablation']) + \
-                               (NoTxV_econdf_counts['new_leeps'].values * cost_dict['leep']) + \
-                               (NoTxV_econdf_counts['new_cancer_treatments'].values * cost_dict['cancer'])
+            daly_infant = yll + yld
+
+            total_cost_infant = (econdf_cancers['new_vaccinations'].values * cost_dict['adolescent_pxv']) + \
+                                (econdf_cancers['new_infant_vaccinations'].values * cost_dict['infant_pxv']) + \
+                                (econdf_cancers['new_thermal_ablations'].values * cost_dict['ablation']) + \
+                             (econdf_cancers['new_leeps'].values * cost_dict['leep']) + \
+                             (econdf_cancers['new_cancer_treatments'].values * cost_dict['cancer'])
             if discounting:
-                cost_noTxV = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_noTxV)])
+                cost_infant = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_infant)])
             else:
-                cost_noTxV = np.sum(total_cost_noTxV)
-            cost_noTxV += cost_noTxV
-            txvx_scen_label_age = f'{txvx_scen}'
+                cost_infant = np.sum(total_cost_infant)
 
-            TxV_econdf_counts = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)
-                                 & (econ_df.txvx_scen == txvx_scen_label_age) & (econ_df.location == location)].groupby(
-                'year')[
-                ['new_tx_vaccinations', 'new_thermal_ablations', 'new_leeps',
-                 'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
+            dalys_averted = daly_no_infant - daly_infant
+            additional_cost = cost_infant - cost_no_infant
+            cost_daly_averted = additional_cost / dalys_averted
 
-            TxV_econdf_means = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)
-                                        & (econ_df.txvx_scen == txvx_scen_label_age) & (
-                                                    econ_df.location == location)].groupby(
-                'year')[
-                ['av_age_cancer_deaths', 'av_age_cancers']].mean()
-
-            if discounting:
-                cancers = np.array([i / 1.03 ** t for t, i in enumerate(TxV_econdf_counts['new_cancers'].values)])
-                cancer_deaths = np.array(
-                    [i / 1.03 ** t for t, i in enumerate(TxV_econdf_counts['new_cancer_deaths'].values)])
-            else:
-                cancers = TxV_econdf_counts['new_cancers'].values
-                cancer_deaths = TxV_econdf_counts['new_cancer_deaths'].values
-            avg_age_ca_death = np.mean(TxV_econdf_means['av_age_cancer_deaths'])
-            avg_age_ca = np.mean(TxV_econdf_means['av_age_cancers'])
-            ca_years = avg_age_ca_death - avg_age_ca
-            yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
-            yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
-            daly_TxV = yll + yld
-            dalys_TxV += daly_TxV
-
-            total_cost_TxV = (TxV_econdf_counts['new_tx_vaccinations'].values * cost_dict['txv']) + \
-                             (TxV_econdf_counts['new_thermal_ablations'].values * cost_dict['ablation']) + \
-                             (TxV_econdf_counts['new_leeps'].values * cost_dict['leep']) + \
-                             (TxV_econdf_counts['new_cancer_treatments'].values * cost_dict['cancer'])
-            if discounting:
-                cost_TxV = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_TxV)])
-            else:
-                cost_TxV = np.sum(total_cost_TxV)
-            cost_TxV += cost_TxV
-
-        dalys_averted = dalys_noTxV - dalys_TxV
-        additional_cost = cost_TxV - cost_noTxV
-        cost_daly_averted = additional_cost / dalys_averted
-
-        ax.plot(dalys_averted/1e6, cost_daly_averted, color=colors[ib+1], marker='s', linestyle = 'None', markersize=20,
-                label=background_scen_label)
+            ax.plot(dalys_averted / 1e6, cost_daly_averted, color=colors[ieff+1], marker=markers[icov], linestyle='None', markersize=20)
 
 
     # sc.SIticks(ax)
-    ax.legend(title='Background intervention scale-up')
+    # ax.legend(title='Background intervention scale-up')
     ax.set_xlabel('DALYs averted (millions), 2030-2060')
     ax.set_ylabel('Incremental costs/DALY averted, $USD 2030-2060')
 
-    ax.set_ylim([0, 400])
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(left=0)
     # fig.suptitle(f'TxV CEA for {locations}', fontsize=18)
     fig.tight_layout()
     fig_name = f'{figfolder}/CEA.png'
+    fig.savefig(fig_name, dpi=100)
+
+    return
+
+def plot_resource_use(location=None, background_scen=None, infant_coverages=None, infant_efficacies=None):
+
+    set_font(size=24)
+
+    econ_df = sc.loadobj(f'{resfolder}/{location}_econ.obj')
+
+    colors = sc.gridcolors(20)
+    df = sc.dcp(econ_df)
+    df['year'] = df.index
+    df = df.pivot(index='year', columns='vx_scen', values='new_vaccinations')
+    fig, axes = pl.subplots(2,1, figsize=(12, 12))
+    vx_scen_label = background_scen['vx_scen']
+    screen_scen_label = background_scen['screen_scen']
+    width = 0.1
+    r1 = np.arange(len(infant_coverages))
+    r2 = [x + width for x in r1]
+    r3 = [x + width for x in r2]
+    r4 = [x + width for x in r3]
+    xes = [r1, r2, r3, r4]
+
+    for icov, inf_coverage in enumerate(infant_coverages):
+        for ieff, inf_efficacy in enumerate(infant_efficacies):
+            vx_scen_label_to_use = f'{vx_scen_label}, {inf_coverage}% cov, infant, {inf_efficacy}% efficacy'
+
+            econdf_cancers = \
+            econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
+                ['new_vaccinations', 'new_infant_vaccinations']].sum()
+            adolsecent_pxv = np.sum(econdf_cancers['new_vaccinations'])
+            infant_pxv = np.sum(econdf_cancers['new_infant_vaccinations'])
+
+            if icov == 0:
+                axes[0].scatter(xes[ieff][icov], adolsecent_pxv/1e6, color=colors[ieff+1], s=200, label=inf_efficacy)
+            else:
+                axes[0].scatter(xes[ieff][icov], adolsecent_pxv/1e6, s=200, color=colors[ieff + 1])
+            axes[1].scatter(xes[ieff][icov], infant_pxv/1e9, s=200, color=colors[ieff + 1])
+
+    axes[0].set_ylabel('Doses, 2025-2100 (millions)')
+    axes[1].set_ylabel('Doses, 2025-2100 (billions)')
+    axes[0].set_title('Adolescent vaccine doses')
+    axes[1].set_title('Infant vaccine doses')
+    axes[0].set_xticks([r + 1.5*width for r in range(len(r1))], infant_coverages)
+    axes[1].set_xticks([r + 1.5 * width for r in range(len(r1))], infant_coverages)
+    sc.SIticks(axes[0])
+    sc.SIticks(axes[1])
+    axes[0].legend()
+    fig.tight_layout()
+    fig_name = f'{figfolder}/resource_use.png'
     fig.savefig(fig_name, dpi=100)
 
     return
