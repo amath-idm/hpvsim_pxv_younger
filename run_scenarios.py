@@ -200,10 +200,10 @@ if __name__ == '__main__':
             # TxVx                   : No txvx, use case 1 w/ different efficacy values
             screen_scens = sc.objdict({
                 'No screening': {},
-                # 'HPV, 35% sc cov': dict(
-                #     primary='hpv',
-                #     screen_coverage=0.35,
-                # ),
+                'HPV, 15% sc cov': dict(
+                    primary='hpv',
+                    screen_coverage=0.15,
+                ),
                 # 'HPV, 70% sc cov, 90% tx cov': dict(
                 #     primary='hpv',
                 #     screen_coverage=0.7,
@@ -307,18 +307,20 @@ if __name__ == '__main__':
                 infant_coverage=90
             )
 
-            # ut.plot_CEA(
-            #     location=location,
-            #     background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
-            #     infant_efficacies=[30, 50, 70, 90],
-            #     infant_coverages=[70, 90]
-            # )
+            ut.plot_CEA(
+                location=location,
+                background_scen={'screen_scen': 'No screening'},
+                adolescent_coverages=[20, 40, 60],
+                infant_efficacies=[50, 70, 90],
+                infant_coverage=90
+            )
 
             ut.plot_resource_use(
                 location=location,
-                background_scen={'vx_scen': 'Vx, 50% cov, 9-14', 'screen_scen': 'No screening'},
-                infant_efficacies=[30, 50, 70, 90],
-                infant_coverages=[70, 90]
+                background_scen={'screen_scen': 'No screening'},
+                adolescent_coverages=[20, 40, 60],
+                infant_efficacies=[50, 70, 90],
+                infant_coverage=90
             )
 
 

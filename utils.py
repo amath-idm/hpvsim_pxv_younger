@@ -115,7 +115,7 @@ def lognorm_params(par1, par2):
 def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=None, infant_coverage=None,
                    infant_efficacies=None, discounting=False):
 
-    set_font(size=24)
+    set_font(size=16)
 
     bigdf = sc.loadobj(f'{resfolder}/{location}.obj')
     econdf = sc.loadobj(f'{resfolder}/{location}_econ.obj')
@@ -125,15 +125,7 @@ def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=Non
     markers = ['s', 'p', '*']
     ls = ['dashed', 'dotted']
     xes = np.arange(len(infant_efficacies))
-    fig = pl.figure(constrained_layout=True, figsize=(22, 16))
-    spec2 = GridSpec(ncols=6, nrows=2, figure=fig)
-    ax1_left = fig.add_subplot(spec2[0, 0:2])
-    ax1_middle = fig.add_subplot(spec2[0, 2:4])
-    ax1_right = fig.add_subplot(spec2[0, 4:6])
-    ax2 = fig.add_subplot(spec2[1,0:2])
-    ax3 = fig.add_subplot(spec2[1,2:4])
-    ax4 = fig.add_subplot(spec2[1,4:6])
-    axes = [ax1_left, ax1_middle, ax1_right]
+    fig, axes = pl.subplots(nrows=1, ncols=3, figsize=(12, 8))
 
     for ia, adolescent_coverage in enumerate(adolescent_coverages):
         vx_scen_label = f'Vx, {adolescent_coverage}% cov, 9-14'
@@ -169,11 +161,6 @@ def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=Non
         cancer_ts = np.array(no_infant_df['asr_cancer_incidence'])[ys:ye]
         cancer_ts_low = np.array(no_infant_df['asr_cancer_incidence_low'])[ys:ye]
         cancer_ts_high = np.array(no_infant_df['asr_cancer_incidence_high'])[ys:ye]
-        label = vx_scen_label.replace('Vx, ', '')
-        axes[ia].plot(years, cancer_ts, color=colors[0], label=label)
-        axes[ia].fill_between(years, cancer_ts_low, cancer_ts_high, color=colors[0], alpha=0.3)
-
-        axes[ia].set_title(f'{adolescent_coverage}% 9-14 coverage')
 
         for ieff, inf_efficacy in enumerate(infant_efficacies):
             vx_scen_label_to_use = f'{vx_scen_label}, {infant_coverage}% cov, infant, {inf_efficacy}% efficacy'
@@ -206,54 +193,40 @@ def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=Non
             dalys = yll + yld
             dalys_averted = dalys_no_infant - dalys
 
-            ax4.scatter(xes[ieff], dalys_averted, color=colors[ieff+1], marker=markers[ia], s=200)
-            ys = sc.findinds(df.index, 2025)[0]
-            ye = sc.findinds(df.index, 2100)[0]
-            years = df.index[ys:ye]
-            cancer_ts = np.array(df['asr_cancer_incidence'])[ys:ye]
-            cancer_ts_low = np.array(df['asr_cancer_incidence_low'])[ys:ye]
-            cancer_ts_high = np.array(df['asr_cancer_incidence_high'])[ys:ye]
-            if ia == 0:
-                axes[ia].plot(years, cancer_ts, color=colors[ieff+1], label=f'{inf_efficacy}% infant efficacy')
-            else:
-                axes[ia].plot(years, cancer_ts, color=colors[ieff + 1])
-            axes[ia].fill_between(years, cancer_ts_low, cancer_ts_high, color=colors[ieff+1], alpha=0.3)
+            axes[2].scatter(xes[ieff], dalys_averted, color=colors[ieff+1], marker=markers[ia], s=200)
             cancers_averted = np.sum(np.array(no_infant_df['cancers'])[ys:ye]) - np.sum(np.array(df['cancers'])[ys:ye])
             if ieff==0:
-                ax2.scatter(xes[ieff], cancers_averted, color=colors[ieff+1], marker=markers[ia], s=200, label=f'{adolescent_coverage}% 9-14 coverage')
+                axes[0].scatter(xes[ieff], cancers_averted, color=colors[ieff+1], marker=markers[ia], s=200, label=f'{adolescent_coverage}%')
             else:
-                ax2.scatter(xes[ieff], cancers_averted, color=colors[ieff + 1], marker=markers[ia], s=200)
+                axes[0].scatter(xes[ieff], cancers_averted, color=colors[ieff + 1], marker=markers[ia], s=200)
             cancer_deaths_averted = np.sum(np.array(no_infant_df['cancer_deaths'])[ys:ye]) - np.sum(np.array(df['cancer_deaths'])[ys:ye])
-            ax3.scatter(xes[ieff], cancer_deaths_averted, color=colors[ieff+1], marker=markers[ia], s=200)
+            axes[1].scatter(xes[ieff], cancer_deaths_averted, color=colors[ieff+1], marker=markers[ia], s=200)
 
-    ax2.axhline(y=0, color='black')
-    ax3.axhline(y=0, color='black')
-    ax4.axhline(y=0, color='black')
-    ax2.set_xticks([r for r in range(len(xes))], infant_efficacies)
-    ax3.set_xticks([r for r in range(len(xes))], infant_efficacies)
-    ax4.set_xticks([r for r in range(len(xes))], infant_efficacies)
-    ax2.set_xlabel('Vaccine efficacy for infants')
-    ax3.set_xlabel('Vaccine efficacy for infants')
-    ax4.set_xlabel('Vaccine efficacy for infants')
-    ax1_left.set_ylabel('Cervical cancer incidence (per 100k)')
-    ax4.set_ylabel('DALYs averted relative to 9yo\n(2025-2100)')
-    ax3.set_ylabel('Cancer deaths averted relative to 9yo\n(2025-2100)')
-    ax2.set_ylabel('Cancers averted relative to 9yo\n(2025-2100)')
-    for ax in [ax1_left, ax1_middle, ax1_right, ax2, ax3, ax4]:
+    axes[0].axhline(y=0, color='black')
+    axes[1].axhline(y=0, color='black')
+    axes[2].axhline(y=0, color='black')
+    axes[0].set_xticks([r for r in range(len(xes))], infant_efficacies)
+    axes[1].set_xticks([r for r in range(len(xes))], infant_efficacies)
+    axes[2].set_xticks([r for r in range(len(xes))], infant_efficacies)
+    axes[0].set_xlabel('Vaccine efficacy for infants (%)')
+    axes[1].set_xlabel('Vaccine efficacy for infants (%)')
+    axes[2].set_xlabel('Vaccine efficacy for infants (%)')
+    # ax1.set_ylabel('Cervical cancer incidence (per 100k)')
+    axes[2].set_ylabel('DALYs averted relative to 9yo (2025-2100)')
+    axes[1].set_ylabel('Cancer deaths averted relative to 9yo (2025-2100)')
+    axes[0].set_ylabel('Cancers averted relative to 9yo (2025-2100)')
+    for ax in axes:
         sc.SIticks(ax)
-    ax1_left.set_ylim(bottom=0)
-    ax1_middle.set_ylim(bottom=0)
-    ax1_right.set_ylim(bottom=0)
-    fig.suptitle(location.capitalize())
-    ax1_left.legend()
-    ax2.legend()
+
+    axes[0].legend(title='9-14 coverage')
     fig.tight_layout()
     fig_name = f'{figfolder}/{location}_vx_impact.png'
     fig.savefig(fig_name, dpi=100)
 
     return
 
-def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_efficacies=None, discounting=False):
+def plot_CEA(location=None, background_scen=None, adolescent_coverages=None, infant_coverage=None,
+                   infant_efficacies=None, discounting=False):
 
     set_font(size=24)
 
@@ -269,54 +242,56 @@ def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_
 
     standard_le = 88.8
     colors = sc.gridcolors(20)
-    markers = ['s', 'p']
+    markers = ['s', 'p', '*']
     fig, ax = pl.subplots(figsize=(12, 12))
-    vx_scen_label = background_scen['vx_scen']
     screen_scen_label = background_scen['screen_scen']
-    no_infant_econdf_counts = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
-        'year')[
-        ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
-         'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
+    handles = []
+    for ia, adolescent_coverage in enumerate(adolescent_coverages):
+        vx_scen_label = f'Vx, {adolescent_coverage}% cov, 9-14'
+        no_infant_econdf_counts = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
+            'year')[
+            ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
+             'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
 
-    no_infant_econdf_means = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
-        'year')[
-        ['av_age_cancer_deaths', 'av_age_cancers']].mean()
+        no_infant_econdf_means = econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label)].groupby(
+            'year')[
+            ['av_age_cancer_deaths', 'av_age_cancers']].mean()
 
-    if discounting:
-        cancers = np.array([i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancers'].values)])
-        cancer_deaths = np.array(
-            [i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancer_deaths'].values)])
-    else:
-        cancers = no_infant_econdf_counts['new_cancers'].values
-        cancer_deaths = no_infant_econdf_counts['new_cancer_deaths'].values
-    avg_age_ca_death = np.mean(no_infant_econdf_means['av_age_cancer_deaths'])
-    avg_age_ca = np.mean(no_infant_econdf_means['av_age_cancers'])
-    ca_years = avg_age_ca_death - avg_age_ca
-    yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
-    yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
-    daly_no_infant = yll + yld
-    total_cost_no_infant = (no_infant_econdf_counts['new_vaccinations'].values * cost_dict['adolescent_pxv']) + \
-                       (no_infant_econdf_counts['new_thermal_ablations'].values * cost_dict['ablation']) + \
-                       (no_infant_econdf_counts['new_leeps'].values * cost_dict['leep']) + \
-                       (no_infant_econdf_counts['new_cancer_treatments'].values * cost_dict['cancer'])
-    if discounting:
-        cost_no_infant = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_no_infant)])
-    else:
-        cost_no_infant = np.sum(total_cost_no_infant)
+        if discounting:
+            cancers = np.array([i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancers'].values)])
+            cancer_deaths = np.array(
+                [i / 1.03 ** t for t, i in enumerate(no_infant_econdf_counts['new_cancer_deaths'].values)])
+        else:
+            cancers = no_infant_econdf_counts['new_cancers'].values
+            cancer_deaths = no_infant_econdf_counts['new_cancer_deaths'].values
+        avg_age_ca_death = np.mean(no_infant_econdf_means['av_age_cancer_deaths'])
+        avg_age_ca = np.mean(no_infant_econdf_means['av_age_cancers'])
+        ca_years = avg_age_ca_death - avg_age_ca
+        yld = np.sum(np.sum([0.54 * .1, 0.049 * .5, 0.451 * .3, 0.288 * .1]) * ca_years * cancers)
+        yll = np.sum((standard_le - avg_age_ca_death) * cancer_deaths)
+        daly_no_infant = yll + yld
+        total_cost_no_infant = (no_infant_econdf_counts['new_vaccinations'].values * cost_dict['adolescent_pxv']) + \
+                           (no_infant_econdf_counts['new_thermal_ablations'].values * cost_dict['ablation']) + \
+                           (no_infant_econdf_counts['new_leeps'].values * cost_dict['leep']) + \
+                           (no_infant_econdf_counts['new_cancer_treatments'].values * cost_dict['cancer'])
+        if discounting:
+            cost_no_infant = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_no_infant)])
+        else:
+            cost_no_infant = np.sum(total_cost_no_infant)
 
-    for icov, inf_coverage in enumerate(infant_coverages):
         for ieff, inf_efficacy in enumerate(infant_efficacies):
-            vx_scen_label_to_use = f'{vx_scen_label}, {inf_coverage}% cov, infant, {inf_efficacy}% efficacy'
+            vx_scen_label_to_use = f'{vx_scen_label}, {infant_coverage}% cov, infant, {inf_efficacy}% efficacy'
 
             econdf_cancers = \
-            econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
-                ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
-                 'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
+                econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby(
+                    'year')[
+                    ['new_vaccinations', 'new_infant_vaccinations', 'new_thermal_ablations', 'new_leeps',
+                     'new_cancer_treatments', 'new_cancers', 'new_cancer_deaths']].sum()
 
             econdf_ages = \
-            econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
-                ['av_age_cancer_deaths', 'av_age_cancers']].mean()
-
+                econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby(
+                    'year')[
+                    ['av_age_cancer_deaths', 'av_age_cancers']].mean()
 
             if discounting:
                 cancers = np.array([i / 1.03 ** t for t, i in enumerate(econdf_cancers['new_cancers'].values)])
@@ -335,8 +310,8 @@ def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_
             total_cost_infant = (econdf_cancers['new_vaccinations'].values * cost_dict['adolescent_pxv']) + \
                                 (econdf_cancers['new_infant_vaccinations'].values * cost_dict['infant_pxv']) + \
                                 (econdf_cancers['new_thermal_ablations'].values * cost_dict['ablation']) + \
-                             (econdf_cancers['new_leeps'].values * cost_dict['leep']) + \
-                             (econdf_cancers['new_cancer_treatments'].values * cost_dict['cancer'])
+                                (econdf_cancers['new_leeps'].values * cost_dict['leep']) + \
+                                (econdf_cancers['new_cancer_treatments'].values * cost_dict['cancer'])
             if discounting:
                 cost_infant = np.sum([i / 1.03 ** t for t, i in enumerate(total_cost_infant)])
             else:
@@ -346,14 +321,21 @@ def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_
             additional_cost = cost_infant - cost_no_infant
             cost_daly_averted = additional_cost / dalys_averted
 
-            ax.plot(dalys_averted / 1e6, cost_daly_averted, color=colors[ieff+1], marker=markers[icov], linestyle='None', markersize=20)
+            handle, = ax.plot(dalys_averted / 1e6, cost_daly_averted, color=colors[ieff + 1], marker=markers[ia],
+                    linestyle='None', markersize=20)
 
+            handles.append(handle)
 
-    # sc.SIticks(ax)
+    legend1 = ax.legend([handles[0], handles[3], handles[6]], adolescent_coverages, title='9-14 coverage', loc=1)
+    ax.legend([handles[0], handles[1], handles[2]], infant_efficacies, title='Infant efficacy', loc='center right')
+    pl.gca().add_artist(legend1)
+
+    sc.SIticks(ax)
     # ax.legend(title='Background intervention scale-up')
-    ax.set_xlabel('DALYs averted (millions), 2030-2060')
-    ax.set_ylabel('Incremental costs/DALY averted, $USD 2030-2060')
-
+    ax.set_xlabel('DALYs averted (millions), 2025-2100')
+    ax.set_ylabel('Incremental costs/DALY averted, $USD 2025-2100')
+    # ax.axhline(y=0, color='black')
+    # ax.axvline(x=0, color='black')
     ax.set_ylim(bottom=0)
     ax.set_xlim(left=0)
     # fig.suptitle(f'TxV CEA for {locations}', fontsize=18)
@@ -363,7 +345,8 @@ def plot_CEA(location=None, background_scen=None, infant_coverages=None, infant_
 
     return
 
-def plot_resource_use(location=None, background_scen=None, infant_coverages=None, infant_efficacies=None):
+def plot_resource_use(location=None, background_scen=None, adolescent_coverages=None, infant_coverage=None,
+                   infant_efficacies=None):
 
     set_font(size=24)
 
@@ -374,18 +357,16 @@ def plot_resource_use(location=None, background_scen=None, infant_coverages=None
     df['year'] = df.index
     df = df.pivot(index='year', columns='vx_scen', values='new_vaccinations')
     fig, axes = pl.subplots(2,1, figsize=(12, 12))
-    vx_scen_label = background_scen['vx_scen']
     screen_scen_label = background_scen['screen_scen']
     width = 0.1
-    r1 = np.arange(len(infant_coverages))
+    r1 = np.arange(len(adolescent_coverages))
     r2 = [x + width for x in r1]
     r3 = [x + width for x in r2]
-    r4 = [x + width for x in r3]
-    xes = [r1, r2, r3, r4]
+    xes = [r1, r2, r3]
 
-    for icov, inf_coverage in enumerate(infant_coverages):
+    for icov, adolescent_coverage in enumerate(adolescent_coverages):
         for ieff, inf_efficacy in enumerate(infant_efficacies):
-            vx_scen_label_to_use = f'{vx_scen_label}, {inf_coverage}% cov, infant, {inf_efficacy}% efficacy'
+            vx_scen_label_to_use = f'Vx, {adolescent_coverage}% cov, 9-14, {infant_coverage}% cov, infant, {inf_efficacy}% efficacy'
 
             econdf_cancers = \
             econ_df[(econ_df.screen_scen == screen_scen_label) & (econ_df.vx_scen == vx_scen_label_to_use)].groupby('year')[
@@ -403,10 +384,10 @@ def plot_resource_use(location=None, background_scen=None, infant_coverages=None
     axes[1].set_ylabel('Doses, 2025-2100 (billions)')
     axes[0].set_title('Adolescent vaccine doses')
     axes[1].set_title('Infant vaccine doses')
-    axes[0].set_xticks([r + 1.5*width for r in range(len(r1))], infant_coverages)
-    axes[1].set_xticks([r + 1.5 * width for r in range(len(r1))], infant_coverages)
-    sc.SIticks(axes[0])
-    sc.SIticks(axes[1])
+    axes[0].set_xticks([r + 1.5*width for r in range(len(r1))], adolescent_coverages)
+    axes[1].set_xticks([r + 1.5 * width for r in range(len(r1))], adolescent_coverages)
+    # sc.SIticks(axes[0])
+    # sc.SIticks(axes[1])
     axes[0].legend()
     fig.tight_layout()
     fig_name = f'{figfolder}/resource_use.png'
