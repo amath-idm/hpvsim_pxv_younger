@@ -202,15 +202,16 @@ def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=Non
             cancer_deaths_averted = np.sum(np.array(no_infant_df['cancer_deaths'])[ys:ye]) - np.sum(np.array(df['cancer_deaths'])[ys:ye])
             axes[1].scatter(xes[ieff], cancer_deaths_averted, color=colors[ieff+1], marker=markers[ia], s=200)
 
+    infant_efficacy_handles = [f'{i}%' for i in infant_efficacies]
     axes[0].axhline(y=0, color='black')
     axes[1].axhline(y=0, color='black')
     axes[2].axhline(y=0, color='black')
-    axes[0].set_xticks([r for r in range(len(xes))], infant_efficacies)
-    axes[1].set_xticks([r for r in range(len(xes))], infant_efficacies)
-    axes[2].set_xticks([r for r in range(len(xes))], infant_efficacies)
-    axes[0].set_xlabel('Vaccine efficacy for infants (%)')
-    axes[1].set_xlabel('Vaccine efficacy for infants (%)')
-    axes[2].set_xlabel('Vaccine efficacy for infants (%)')
+    axes[0].set_xticks([r for r in range(len(xes))], infant_efficacy_handles)
+    axes[1].set_xticks([r for r in range(len(xes))], infant_efficacy_handles)
+    axes[2].set_xticks([r for r in range(len(xes))], infant_efficacy_handles)
+    axes[0].set_xlabel('Vaccine efficacy for infants')
+    axes[1].set_xlabel('Vaccine efficacy for infants')
+    axes[2].set_xlabel('Vaccine efficacy for infants')
     # ax1.set_ylabel('Cervical cancer incidence (per 100k)')
     axes[2].set_ylabel('DALYs averted relative to 9yo (2025-2100)')
     axes[1].set_ylabel('Cancer deaths averted relative to 9yo (2025-2100)')
@@ -228,7 +229,7 @@ def plot_vx_impact(location=None, background_scen=None, adolescent_coverages=Non
 def plot_CEA(location=None, background_scen=None, adolescent_coverages=None, infant_coverage=None,
                    infant_efficacies=None, discounting=False):
 
-    set_font(size=24)
+    set_font(size=16)
 
     econ_df = sc.loadobj(f'{resfolder}/{location}_econ.obj')
 
@@ -243,7 +244,7 @@ def plot_CEA(location=None, background_scen=None, adolescent_coverages=None, inf
     standard_le = 88.8
     colors = sc.gridcolors(20)
     markers = ['s', 'p', '*']
-    fig, ax = pl.subplots(figsize=(12, 12))
+    fig, ax = pl.subplots(figsize=(12, 8))
     screen_scen_label = background_scen['screen_scen']
     handles = []
     for ia, adolescent_coverage in enumerate(adolescent_coverages):
@@ -325,9 +326,10 @@ def plot_CEA(location=None, background_scen=None, adolescent_coverages=None, inf
                     linestyle='None', markersize=20)
 
             handles.append(handle)
-
-    legend1 = ax.legend([handles[0], handles[3], handles[6]], adolescent_coverages, title='9-14 coverage', loc=1)
-    ax.legend([handles[0], handles[1], handles[2]], infant_efficacies, title='Infant efficacy', loc='center right')
+    adolescent_coverage_handles = [f'{i}%' for i in adolescent_coverages]
+    infant_efficacy_handles = [f'{i}%' for i in infant_efficacies]
+    legend1 = ax.legend([handles[0], handles[3], handles[6]], adolescent_coverage_handles, title='9-14 coverage', loc=1)
+    ax.legend([handles[0], handles[1], handles[2]], infant_efficacy_handles, title='Infant efficacy', loc='center right')
     pl.gca().add_artist(legend1)
 
     sc.SIticks(ax)
@@ -353,9 +355,6 @@ def plot_resource_use(location=None, background_scen=None, adolescent_coverages=
     econ_df = sc.loadobj(f'{resfolder}/{location}_econ.obj')
 
     colors = sc.gridcolors(20)
-    df = sc.dcp(econ_df)
-    df['year'] = df.index
-    df = df.pivot(index='year', columns='vx_scen', values='new_vaccinations')
     fig, axes = pl.subplots(2,1, figsize=(12, 12))
     screen_scen_label = background_scen['screen_scen']
     width = 0.1
