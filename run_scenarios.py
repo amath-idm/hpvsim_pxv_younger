@@ -49,7 +49,7 @@ locations = [
     # 'kenya'         # 9
 ]
 
-debug = 0
+debug = 1
 n_seeds = [3, 1][debug] # How many seeds to run per cluster
 
 
@@ -108,6 +108,7 @@ def run_scens(location=None, screen_intvs=None, vx_intvs=None, # Input data
     # Actually run
     sc.heading(f'Running {len(ikw)} scenario sims...')
     calib_pars = sc.loadobj(f'results/{location}_pars{calib_filestem}.obj')
+    calib_pars.pop('hiv_pars')
     kwargs = dict(calib_pars=calib_pars, verbose=verbose, debug=debug, location=location,
                   econ_analyzer=True, end=2100, n_agents=50e3)
     n_workers = 40
@@ -213,175 +214,175 @@ if __name__ == '__main__':
 
             vx_scens = sc.objdict({
                 'No vaccine': {},
-                'Vx, 20% cov, 9-14': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14)
-                ),
-                'Vx, 20% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 20% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 20% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 20% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 20% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.2,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
+                # 'Vx, 20% cov, 9-14': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14)
+                # ),
+                # 'Vx, 20% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.9
+                # ),
+                # 'Vx, 20% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.8
+                # ),
+                # 'Vx, 20% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.7
+                # ),
+                # 'Vx, 20% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.6
+                # ),
+                # 'Vx, 20% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                #     vx_coverage=0.2,
+                #     age_range=(9, 14),
+                #     infant=True,
+                # ),
 
-                'Vx, 30% cov, 9-14': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14)
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
+                # 'Vx, 30% cov, 9-14': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14)
+                # ),
+                # 'Vx, 30% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.9
+                # ),
+                # 'Vx, 30% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.8
+                # ),
+                # 'Vx, 30% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.7
+                # ),
+                # 'Vx, 30% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.6
+                # ),
+                # 'Vx, 30% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                #     vx_coverage=0.3,
+                #     age_range=(9, 14),
+                #     infant=True,
+                # ),
 
-                'Vx, 40% cov, 9-14': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14)
-                ),
-                'Vx, 40% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 40% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 40% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 40% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 40% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.4,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
+                # 'Vx, 40% cov, 9-14': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14)
+                # ),
+                # 'Vx, 40% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.9
+                # ),
+                # 'Vx, 40% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.8
+                # ),
+                # 'Vx, 40% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.7
+                # ),
+                # 'Vx, 40% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.6
+                # ),
+                # 'Vx, 40% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                #     vx_coverage=0.4,
+                #     age_range=(9, 14),
+                #     infant=True,
+                # ),
 
-                'Vx, 50% cov, 9-14': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14)
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
+                # 'Vx, 50% cov, 9-14': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14)
+                # ),
+                # 'Vx, 50% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.9
+                # ),
+                # 'Vx, 50% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.8
+                # ),
+                # 'Vx, 50% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.7
+                # ),
+                # 'Vx, 50% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.6
+                # ),
+                # 'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                #     vx_coverage=0.5,
+                #     age_range=(9, 14),
+                #     infant=True,
+                # ),
 
-                'Vx, 60% cov, 9-14': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14)
-                ),
-                'Vx, 60% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 60% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 60% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 60% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 60% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.6,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
+                # 'Vx, 60% cov, 9-14': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14)
+                # ),
+                # 'Vx, 60% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.9
+                # ),
+                # 'Vx, 60% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.8
+                # ),
+                # 'Vx, 60% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.7
+                # ),
+                # 'Vx, 60% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14),
+                #     infant=True,
+                #     infant_efficacy=0.6
+                # ),
+                # 'Vx, 60% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
+                #     vx_coverage=0.6,
+                #     age_range=(9, 14),
+                #     infant=True,
+                # ),
 
             })
 
@@ -429,3 +430,4 @@ if __name__ == '__main__':
 
 
         print('done')
+# %%
