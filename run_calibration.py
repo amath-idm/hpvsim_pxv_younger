@@ -3,7 +3,7 @@ This file is used to run calibrations for TxV 10-country analysis.
 
 Instructions: Go to the CONFIGURATIONS section on lines 29-36 to set up the script before running it.
 """
-
+#%%
 # Additions to handle numpy multithreading
 import os
 
@@ -28,16 +28,16 @@ import utils as ut
 
 # CONFIGURATIONS TO BE SET BY USERS BEFORE RUNNING
 to_run = [
-    # 'run_calibration',  # Make sure this is uncommented if you want to _run_ the calibrations (usually on VMs)
-    'plot_calibration',  # Make sure this is uncommented if you want to _plot_ the calibrations (usually locally)
+    'run_calibration',  # Make sure this is uncommented if you want to _run_ the calibrations (usually on VMs)
+    # 'plot_calibration',  # Make sure this is uncommented if you want to _plot_ the calibrations (usually locally)
 ]
 debug = False  # If True, this will do smaller runs that can be run locally for debugging
 do_save = True
 
 # Run settings for calibration (dependent on debug)
-n_trials = [8000, 10][debug]  # How many trials to run for calibration
-n_workers = [40, 1][debug]  # How many cores to use
-storage = ["mysql://hpvsim_user@localhost/hpvsim_db", None][debug]  # Storage for calibrations
+n_trials = [7500, 5][debug]  # How many trials to run for calibration
+n_workers = [40, 2][debug]  # How many cores to use
+storage = [None, None][debug]  # Storage for calibrations
 
 
 ########################################################################
@@ -66,7 +66,7 @@ def make_priors():
 
 
 def run_calib(location=None, n_trials=None, n_workers=None,
-              do_plot=False, do_save=True, filestem=''):
+              do_plot=False, do_save=True, filestem='', k=0, run_calib =True):
 
     sim = rs.make_sim(location)
     datafiles = ut.make_datafiles([location])[location]
@@ -75,14 +75,23 @@ def run_calib(location=None, n_trials=None, n_workers=None,
     calib_pars = dict(
         beta=[0.06, 0.02, 0.5, 0.02],
         own_imm_hr=[0.5, 0.25, 1, 0.05],
-        age_risk=dict(risk=[1, 1, 4, 0.1],
+        age_risk=dict(risk=[1, 1, 4, 0.01],
                       age=[30, 30, 45, 1]),
-        sev_dist=dict(par1=[1, 1, 2, 0.1]),
+        sev_dist=dict(par1=[1, 1, 2.0, 0.01]),
         cell_imm_init=dict(par1=[0.5, 0.2, 0.8, 0.05]),
+        # hpv_control_prob = [0.25*(k+1/2),0.25*(k), 0.25*(k+1), 0.001],
+        
+        # Fully no latent
+        # hpv_control_prob = [0,0,0,0.001],
+        # hpv_reactivation = [1,1,1,0.001],
+
+        # All latent
+        hpv_control_prob = [0.75,0.75,0.75,0.001],
+        hpv_reactivation = [0,0,1,0.01],
     )
 
     if location == 'nigeria':
-        calib_pars['sev_dist']['par1']= [2, 1, 3, 0.1]
+        calib_pars['sev_dist']['par1']= [2, 1, 3, 0.01]
     # if location == 'india':
     if location is None:
         sexual_behavior_pars = dict(
@@ -90,7 +99,7 @@ def run_calib(location=None, n_trials=None, n_workers=None,
             m_partners=dict(
                 c=dict(par1=[10, 5, 12, 1])
             ),
-            f_cross_layer=[0.1, 0.05, 0.5, 0.05],
+            f_cross_layer=[0.1, 0.05, 0.5, 0.01],
             f_partners=dict(
                 c=dict(par1=[1, .5, 2, .1], par2=[.2, .1, 1, .05])
             )
@@ -101,7 +110,7 @@ def run_calib(location=None, n_trials=None, n_workers=None,
             m_partners=dict(
                 c=dict(par1=[0.2, 0.1, 0.6, 0.02])
             ),
-            f_cross_layer=[0.1, 0.05, 0.5, 0.05],
+            f_cross_layer=[0.1, 0.05, 0.5, 0.01],
             f_partners=dict(
                 c=dict(par1=[0.2, 0.1, 0.6, 0.02])
             )
@@ -120,6 +129,8 @@ def run_calib(location=None, n_trials=None, n_workers=None,
                             total_trials=n_trials, n_workers=n_workers,
                             storage=storage
                             )
+    if not run_calib: 
+        return calib
     calib.calibrate()
     filename = f'{location}_calib{filestem}'
     if do_plot:
@@ -136,13 +147,13 @@ def run_calib(location=None, n_trials=None, n_workers=None,
 # Load pre-run calibration
 ########################################################################
 def load_calib(location=None, do_plot=True, which_pars=0, save_pars=True, filestem=''):
+    import matplotlib.pyplot as plt
     fnlocation = location.replace(' ', '_')
     filename = f'{fnlocation}_calib{filestem}'
     calib = sc.load(f'results/{filename}.obj')
     if do_plot:
-        sc.fonts(add=sc.thisdir(aspath=True) / 'Libertinus Sans')
-        sc.options(font='Libertinus Sans')
-        fig = calib.plot(res_to_plot=200, plot_type='sns.boxplot', do_save=False)
+        # sc.options(font='Libertinus Sans')
+        fig = calib.plot(res_to_plot=100, plot_type='sns.boxplot', do_save=False)
         fig.suptitle(f'Calibration results, {location.capitalize()}')
         fig.tight_layout()
         fig.savefig(f'figures/{filename}.png')
@@ -152,7 +163,7 @@ def load_calib(location=None, do_plot=True, which_pars=0, save_pars=True, filest
         trial_pars = sc.autolist()
         for i in range(100):
             trial_pars += calib.trial_pars_to_sim_pars(which_pars=i)
-        sc.save(f'results/{location}_pars{filestem}.obj', calib_pars)
+        sc.save(f'results/{location}_pars{filestem}.obj', trial_pars)
 
     return calib
 
@@ -225,7 +236,6 @@ def plot_calibration_combined(calibs, locations, res_to_plot=50):
     fig.tight_layout()
     pl.savefig(f"figures/calibration_combined.png", dpi=100)
 
-
 # %% Run as a script
 if __name__ == '__main__':
 
@@ -233,24 +243,24 @@ if __name__ == '__main__':
     # locations = ['india']
     locations = [
         'india',  # 0
-        'indonesia',    # 1
-        'nigeria',      # 2
-        'tanzania',     # 3
-        'bangladesh',   # 4
-        'myanmar',      # 5
-        'uganda',       # 6
-        'ethiopia',     # 7
-        'drc',          # 8
+        # 'indonesia',    # 1
+        # 'nigeria',      # 2
+        # 'tanzania',     # 3
+        # 'bangladesh',   # 4
+        # 'myanmar',      # 5
+        # 'uganda',       # 6
+        # 'ethiopia',     # 7
+        # 'drc',          # 8
         # 'kenya'         # 9
     ]
 
 
     # Run calibration - usually on VMs
     if 'run_calibration' in to_run:
-        filestem = '_nov13'
         for location in locations:
+            filestem = f'_jan10_hpv_control_75'
             sim, calib = run_calib(location=location, n_trials=n_trials, n_workers=n_workers,
-                                   do_save=do_save, do_plot=False, filestem=filestem)
+                                do_save=do_save, do_plot=False, filestem=filestem, k=0)
 
     # Load the calibration, plot it, and save the best parameters -- usually locally
     if 'plot_calibration' in to_run:
@@ -261,9 +271,9 @@ if __name__ == '__main__':
             elif location in ['uganda', 'drc']:
                 filestem = '_nov06'
             else:
-                filestem = '_nov13'
-            calib = load_calib(location=location, do_plot=False, save_pars=False, filestem=filestem)
+                filestem = '_jan1'
+            calib = load_calib(location=location, do_plot=True, save_pars=True, filestem=filestem)
             calibs.append(calib)
-        plot_calibration_combined(calibs, locations)
+        # plot_calibration_combined(calibs, locations)
 
     T.toc('Done')

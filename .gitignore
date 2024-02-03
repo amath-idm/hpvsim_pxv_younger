@@ -1,0 +1,13 @@
+# HPVsim-generated files
+*.obj
+*.csv
+*.pyc
+*.png
+*.xlsx
+results/
+modules.rst
+
+# Other files
+.idea
+.vscode
+.DS_Store
