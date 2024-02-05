@@ -55,17 +55,70 @@ all_df = pd.concat([no_df, df1, df2, hund_df])
 all_df = custom_sort_order(all_df)
 #%% Filter with not-vaccinated case. For each outcomes, plot results by year(x-axis) by 'name' (latency)
 plot_df = all_df
-#%% Filter with not-vaccinated case. For each outcomes, year, plot results by age(x-axis) by 'name' (latency)
-def generate_age_label(column_name):
-    if column_name.startswith(plot_val+'_by_age'):
-        age_range = column_name.replace(plot_val+'_by_age_', '')
-        age_range = age_range.replace('_', '-')
-        return f'{5*int(age_range)}~{5*int(age_range)+4}'
-    else:
-        return column_name
 
-plot_df = all_df
 # filtering
+filter_by = 'vx_scen'
+filter_val = plot_df[filter_by].unique()[0]
+plot_df = plot_df[plot_df[filter_by]==filter_val]
+
+# plot lines by
+plot_by = 'name'
+
+#plotting outcomes
+plot_val_list = ['n_susceptible', 'n_infectious','n_precin','n_cin','cancers']
+
+#plot setting
+show_bound = True
+
+fig, axes = plt.subplots(len(plot_val_list), 1, figsize=(7, 3 * len(plot_val_list)))
+# for each simultion outcomes
+for idx, plot_val in enumerate(plot_val_list):
+    plot_idx = plot_val_list.index(plot_val)
+    plot_by_list = plot_df[plot_by].unique()
+    palette = sns.color_palette('coolwarm_r', n_colors=len(plot_by_list))
+    data_mean = plot_df.groupby([plot_by, 'year'])[plot_val].mean().reset_index()
+    ax = sns.lineplot(data=data_mean, x='year', y=plot_val, hue=plot_by, palette=palette, marker='o', markevery=20, linestyle='-', ax=axes[idx])
+
+    # Use plt.fill_between for filling between low and high
+    if show_bound:
+        data_low = plot_df.groupby([plot_by, 'year'])[plot_val+'_low'].mean().reset_index()
+        data_high = plot_df.groupby([plot_by, 'year'])[plot_val+'_high'].mean().reset_index()
+        for sub_idx, group in data_low.groupby(plot_by):
+            ax.fill_between(group['year'], group[plot_val+'_low'], data_high[data_high[plot_by] == sub_idx][plot_val+'_high'], alpha=0.3, color=palette[list(plot_by_list).index(sub_idx)])
+    ax.set_xlabel('Year')
+    ax.set_ylabel(plot_val)
+    ax.xaxis.grid(True)
+    # ax.set_ylim(0, 45000)  # Adjust the y-axis limit as needed
+    ax.get_legend().set_visible(False)
+    ax.set_title(plot_val + ' by year with ' + str(filter_val))
+handles, labels = axes[0].get_legend_handles_labels()
+fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=len(labels), title=plot_by, title_fontsize=14, fontsize=12)
+plt.tight_layout()
+plt.show()
+
+#%% Compare total outcomes
+plot_val_list = ['n_susceptible', 'n_infectious','n_precin','n_cin','cancers']
+total_df = plot_df.groupby('name')[plot_val_list].sum().reset_index()[plot_val_list]
+total_df /= np.mean(np.array(total_df), axis=0)
+total_df['p(cin|precin)'] = total_df['n_cin']/total_df['n_precin']
+total_df['p(cancer|cin)'] = total_df['cancers']/total_df['n_cin']
+total_df['p(cancer|infectious)'] = total_df['cancers']/total_df['n_infectious']
+
+unique_names = plot_df['name'].unique()
+fig_width = len(unique_names) * 2  # Adjust the multiplier as needed
+fig_height = len(plot_val_list) * 0.5  # Adjust the multiplier as needed
+plt.figure(figsize=(fig_width, fig_height))
+
+sns.heatmap(total_df,cmap='Blues', annot=True)
+plt.xticks(np.arange(len(total_df.columns))+0.5, total_df.columns)
+plt.yticks(np.arange(len(unique_names))+0.5, unique_names, rotation=0)
+plt.axvline(x=5, color='red', linestyle='-', linewidth=2)
+plt.title('Total occurrence divided by mean value')
+plt.show()
+
+
+#%%  For each outcomes and year, plot results by age(x-axis) by 'name' (latency model). Filter with not-vaccinated case. 
+plot_df = all_df
 filter_by = 'vx_scen'
 filter_val = [plot_df[filter_by].unique()[0]]
 plot_df = plot_df[plot_df[filter_by].isin(filter_val)]
