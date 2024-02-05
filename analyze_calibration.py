@@ -186,7 +186,7 @@ def pairplotpars(df, inds=None, color_column=None, cmap='parula', bins=None, edg
 
 # %% Read files
 
-# calib0 = load_calib('india',  filestem='_jan10_hpv_control_0') #
+# calib0 = load_calib('india',  filestem='_jan10_hpv_control_0') # Save top 10 or top 5 param sets using this function
 calib0 = sc.load(f'results/india_calib_jan10_hpv_control_0.obj')
 calib25 = sc.load(f'results/india_calib_jan10_hpv_control_25.obj')
 calib50 = sc.load(f'results/india_calib_jan10_hpv_control_50.obj')
