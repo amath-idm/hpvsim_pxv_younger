@@ -1,6 +1,7 @@
 """
-Define the HPVsim simulation objects.
+Define the HPVsim simulation
 """
+
 # Additions to handle numpy multithreading
 import os
 
@@ -47,7 +48,10 @@ def make_sim(location=None, calib_pars=None, debug=0, screen_intv=None, vx_intv=
         network='default',
         genotypes=[16, 18, 'hi5', 'ohr'],
         location=location,
-        debut=ut.make_sb_data(location=location, dist_type=dist_type, debut_bias=debut_bias),
+        debut=dict(
+            f=dict(dist='lognormal', par1=17.4, par2=2.75),
+            m=dict(dist='lognormal', par1=par1m, par2=),
+        )
         mixing=dp.mixing[location],
         layer_probs=dp.make_layer_probs(location=location, marriage_scale=marriage_scale),
         f_partners=dp.f_partners,
