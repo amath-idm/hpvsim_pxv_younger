@@ -1,9 +1,8 @@
-'''
-Run HPVsim scenarios for each location. 
-
+"""
+Run HPVsim scenarios varying the age of prophylactic vaccination
 Note: requires an HPC to run with debug=False; with debug=True, should take 5-15 min
 to run.
-'''
+"""
 
 
 #%% General settings
@@ -35,31 +34,17 @@ to_run = [
     # 'plot_scenarios'
 ]
 
-# Comment out locations to not run
-locations = [
-    # 'india',        # 0
-    # 'indonesia',    # 1
-    'nigeria',      # 2
-    # 'tanzania',     # 3
-    # 'bangladesh',   # 4
-    # 'myanmar',      # 5
-    # 'uganda',       # 6
-    # 'ethiopia',     # 7
-    # 'drc',          # 8
-    # 'kenya'         # 9
-]
 
 debug = 0
 n_seeds = [3, 1][debug] # How many seeds to run per cluster
 
 
-
 #%% Functions
 
 def make_msims(sims, use_mean=True):
-    '''
+    """
     Utility to take a slice of sims and turn it into a multisim
-    '''
+    """
 
     msim = hpv.MultiSim(sims)
     msim.reduce(use_mean=use_mean)
@@ -81,9 +66,9 @@ def run_scens(location=None, screen_intvs=None, vx_intvs=None, # Input data
               debug=0, n_seeds=n_seeds, verbose=-1,# Sim settings
               calib_filestem=''
               ):
-    '''
-    Run all screening/triage product scenarios for a given location
-    '''
+    """
+    Run vaccination scanerios
+    """
 
     # Set up iteration arguments
     ikw = []
@@ -186,13 +171,7 @@ if __name__ == '__main__':
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
 
     if 'run_scenarios' in to_run:
-        for location in locations:
-            if location in ['tanzania', 'myanmar']:
-                calib_filestem = '_nov07'
-            elif location in ['uganda', 'drc', 'uganda']:
-                calib_filestem = '_nov06'
-            else:
-                calib_filestem = '_nov13'
+            calib_filestem = '_nov13'
 
             # Construct the scenarios
             # Screening scenarios    : No screening, 35% coverage, 70% coverage
