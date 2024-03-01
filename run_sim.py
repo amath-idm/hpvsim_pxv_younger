@@ -49,10 +49,9 @@ def make_sim(location=None, calib_pars=None, debug=0, screen_intv=None, vx_intv=
         genotypes=[16, 18, 'hi5', 'ohr'],
         location=location,
         debut=dict(
-            f=dict(dist='lognormal', par1=17.4, par2=2.75),
-            m=dict(dist='lognormal', par1=par1m, par2=),
-        )
-        mixing=dp.mixing[location],
+            f=dict(dist='lognormal', par1=17.41, par2=2.75),
+            m=dict(dist='lognormal', par1=17.91, par2=2.83),
+        ),
         layer_probs=dp.make_layer_probs(location=location, marriage_scale=marriage_scale),
         f_partners=dp.f_partners,
         m_partners=dp.m_partners,
