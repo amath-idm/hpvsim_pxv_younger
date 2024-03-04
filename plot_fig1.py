@@ -22,7 +22,7 @@ def plot_single(ax, mres, to_plot, si, color, label=None):
 def plot_fig1(msim_dict):
 
     ut.set_font(16)
-    colors = sc.vectocolor(len(efficacy_arr))
+    colors = sc.vectocolor(len(efficacy_arr), reverse=True)
 
     n_plots = len(coverage_arr)
     n_rows, n_cols = sc.get_rows_cols(n_plots)
@@ -41,17 +41,18 @@ def plot_fig1(msim_dict):
         adolescent_label = f'Adolescent: {cov_val} coverage'
         mres = msim_dict[adolescent_label]
         si = sc.findinds(mres.year, start_year)[0]
-        ax = plot_single(ax, mres, to_plot, si, 'k', label='Adolescents')
+        ax = plot_single(ax, mres, to_plot, si, 'k', label='Adolescents only')
 
         for ie, eff_val in enumerate(efficacy_arr):
             infant_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
             mres = msim_dict[infant_label]
             ax = plot_single(ax, mres, to_plot, si, colors[ie], label=f'Infants, {int(eff_val*100)}% efficacy')
 
-        ax.set_ylim(bottom=0, top=22)
+        ax.set_ylim(bottom=0, top=23)
         ax.set_ylabel('ASR cancer incidence')
         ax.set_title(f'{int(cov_val*100)}% vaccine coverage')
-        if pn==0: ax.legend()
+        ax.axhline(y=4, color='k', ls='--')
+        if pn == 0: ax.legend()
 
     fig.tight_layout()
     fig_name = 'figures/vx_scens.png'

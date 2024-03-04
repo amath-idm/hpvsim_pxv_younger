@@ -22,7 +22,7 @@ import analyzers as an
 
 # %% Settings and filepaths
 # Debug switch
-debug = 0  # Run with smaller population sizes and in serial
+debug = 1  # Run with smaller population sizes and in serial
 do_shrink = True  # Do not keep people when running sims (saves memory)
 
 # Save settings
@@ -86,7 +86,7 @@ def make_sim(calib_pars=None, debug=0, interventions=None, datafile=None, seed=1
     if calib_pars is not None:
         pars = sc.mergedicts(pars, calib_pars)
 
-    analyzers = [an.econ_analyzer()]
+    analyzers = [an.daly_computation(start=2000, life_expectancy=88.8)]
 
     # Interventions
     sim = hpv.Sim(pars=pars, interventions=interventions, analyzers=analyzers, datafile=datafile)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     location = 'nigeria'
     calib_par_stem = '_nov13'
     calib_pars = sc.loadobj(f'results/{location}_pars{calib_par_stem}.obj')
-    sim = run_sim(calib_pars=calib_pars, end=2020)
+    sim = run_sim(calib_pars=calib_pars, end=2020, debug=debug)
     sim.plot()
 
     T.toc('Done')

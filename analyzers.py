@@ -1,5 +1,6 @@
 """
 Define custom analyzers for HPVsim
+TODO: get rid of this file, it's already in HPVsim
 """
 
 import numpy as np
@@ -8,7 +9,7 @@ import sciris as sc
 import hpvsim as hpv
 
 
-class econ_analyzer(hpv.Analyzer):
+class daly_computation(hpv.Analyzer):
     """
     Analyzer for feeding into costing/health economic analysis.
     Produces a dataframe by year storing:
@@ -16,12 +17,22 @@ class econ_analyzer(hpv.Analyzer):
         - Average age of new cases, average age of deaths, average age of noncancer death
     """
 
-    def __init__(self, start=2020, *args, **kwargs):
+    def __init__(self, start=2020, life_expectancy=80, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start = start
         self.si = None
         self.df = None
+        self.disability_weights = sc.objdict(
+            weights=[0.54, 0.049, 0.451, 0.288],
+            time_fraction=[0.1, 0.5, 0.3, 0.1],
+        )
+        self.life_expectancy = life_expectancy
         return
+
+    def av_dw(self):
+        dw = self.disability_weights
+        len_dw = len(dw.weights)
+        return sum([dw.weights[i]*dw.time_fraction[i] for i in range(len_dw)])
 
     def initialize(self, sim):
         super().initialize(sim)
@@ -49,8 +60,15 @@ class econ_analyzer(hpv.Analyzer):
 
     def finalize(self, sim):
         # Add in results that are already generated (NB, these have all been scaled already)
-        self.df['new_cancers'] = sim.results['cancers'][self.si:]
-        self.df['new_cancer_deaths'] = sim.results['cancer_deaths'][self.si:]
-        self.df['new_other_deaths'] = sim.results['other_deaths'][self.si:]
+        self.df['cancers'] = sim.results['cancers'][self.si:]
+        self.df['cancer_deaths'] = sim.results['cancer_deaths'][self.si:]
+        self.df['other_deaths'] = sim.results['other_deaths'][self.si:]
+        self.df['cancer_years'] = self.df['av_age_cancer_deaths'] - self.df['av_age_cancers']
+
+        # Actually compute DALYs
+        self.df['yld'] = self.av_dw() * self.df['cancer_years'] * self.df['cancers']
+        self.df['yll'] = (self.life_expectancy - self.df['av_age_cancer_deaths']) * self.df['cancer_deaths']
+        self.df['dalys'] = self.df['yld'] + self.df['yll']
+
         return
 
