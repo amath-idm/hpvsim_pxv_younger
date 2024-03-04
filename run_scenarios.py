@@ -217,7 +217,7 @@ if __name__ == '__main__':
         msim_dict = sc.objdict()
         to_save = ['cancers', 'asr_cancer_incidence', 'cancer_deaths']
         for i, scen_label in enumerate(scen_labels):
-            mm = mlist[i].reduce(output=True)
+            mm = mlist[i].reduce()
             msim_dict[scen_label].sres = {metric: mm.results[metric] for metric in to_save}
             msim_dict[scen_label].ares = mm.get_analyzer().df
         sc.saveobj(f'results/vx.scens', msim_dict)
