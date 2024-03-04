@@ -44,7 +44,7 @@ def plot_fig1(msim_dict):
         ax = plot_single(ax, mres, to_plot, si, 'k', label='Adolescents')
 
         for ie, eff_val in enumerate(efficacy_arr):
-            infant_label = f'Infants: {cov_val} coverage, {eff_val} efficacy'
+            infant_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
             mres = msim_dict[infant_label]
             ax = plot_single(ax, mres, to_plot, si, colors[ie], label=f'Infants, {int(eff_val*100)}% efficacy')
 

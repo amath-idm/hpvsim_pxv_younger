@@ -108,7 +108,7 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
     # Baseline
     vx_scenarios['Baseline'] = []
 
-    # Construct the adolescent scenarios
+    # Construct the adolescent only scenarios
     for cov_val in coverage_arr:
         label = f'Adolescent: {cov_val} coverage'
         routine_vx = hpv.routine_vx(
@@ -131,10 +131,11 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
 
         vx_scenarios[label] = [routine_vx, catchup_vx]
 
-    # Construct all the infant scenarios
+    # Construct the infant scenarios
     for cov_val in coverage_arr:
         for eff_val in efficacy_arr:
-            label = f'Infants: {cov_val} coverage, {eff_val} efficacy'
+
+            label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
 
             routine_vx = hpv.routine_vx(
                 prob=cov_val,
@@ -209,7 +210,7 @@ if __name__ == '__main__':
         vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
         msim = run_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
         msim.save('results/vs.msim')
-        
+
         # Process
         scen_labels = list(vx_scenarios.keys())
         mlist = msim.split(chunks=len(scen_labels))
