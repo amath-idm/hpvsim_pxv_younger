@@ -1,16 +1,16 @@
 """
 Plot 2 and 3 for infant vaccination scenarios
 """
+
 import pandas as pd
-
-
-import pylab as pl
 import sciris as sc
 from run_scenarios import coverage_arr, efficacy_arr
 import utils as ut
 import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.ticker as tkr
 
-def preprocess_fig2(msim_dict, cost_dict):
+def preprocess_data(msim_dict, cost_dict):
 
     # What to store
     start_year = 2025
@@ -57,10 +57,10 @@ def preprocess_fig2(msim_dict, cost_dict):
 
 def plot_fig2(df):
 
-    ut.set_font(16)
-
+    sns.set_style("whitegrid")
+    ut.set_font(30)
     g = sns.catplot(
-        data=df,
+        data=df.loc[df.metric != 'cost'],
         kind="bar",
         x="efficacy",
         y="val",
@@ -68,22 +68,47 @@ def plot_fig2(df):
         hue="coverage",
         palette="rocket",
         sharey=False,
-        height=4, aspect=2,
+        height=5, aspect=3,
     )
     g.set_axis_labels("Vaccine efficacy for infants", "")
     g.set_titles("{row_name} averted")
 
-    import matplotlib.ticker as tkr
     for ax in g.axes.flat:
         ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x), ',')))
     g.legend.set_title("Adolescent\ncoverage")
 
     fig_name = 'figures/vx_impact.png'
     sc.savefig(fig_name, dpi=100)
+    return
 
 
 def plot_fig3(df):
-    return
+    sns.set_style("whitegrid")
+    ut.set_font(14)
+    df2 = df.loc[df['metric'].isin(['DALYs', 'cost'])]
+    df2 = df2.groupby(['coverage', 'efficacy', 'metric']).val.first().unstack().reset_index()
+    df2['Cost per DALY averted'] = df2['cost'] / df2['DALYs']
+    df2['DALYs'] = df2['DALYs']/1e6
+    df2['Adolescent coverage'] = df2['coverage']*100
+
+    g = sns.FacetGrid(
+        data=df2,
+        col="Adolescent coverage",
+        col_wrap=2,
+        hue="efficacy",
+        palette="rocket",
+    )
+    g.map(sns.scatterplot, "DALYs", "Cost per DALY averted")
+    g.add_legend(frameon=False)
+    g.legend.set_title("Infant\nefficacy")
+    for ax in g.axes.flat:
+        ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x), ',')))
+        ax.xaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x))))
+        ax.set_xlim(-20, 20)
+
+    fig_name = 'figures/vx_econ_impact.png'
+    sc.savefig(fig_name, dpi=100)
+    return df2
 
 
 # %% Run as a script
@@ -92,18 +117,14 @@ if __name__ == '__main__':
     # Load scenarios and construct figure
     msim_dict = sc.loadobj('results/vx_scens.obj')
     cost_dict = sc.objdict({
-        'Routine vx':9,
-        'Catchup vx':9,
-        'Infant vx':5,
-        'excision':41.76,
-        'ablation':11.76,
-        'radiation':450
+        'Routine vx': 9,
+        'Catchup vx': 9,
+        'Infant vx': 5,
+        'excision': 41.76,
+        'ablation': 11.76,
+        'radiation': 450
     })
-    df = preprocess_fig2(msim_dict, cost_dict)
+    df = preprocess_data(msim_dict, cost_dict)
 
     plot_fig2(df)
-    plot_fig3(df)
-
-
-
-
+    df2 = plot_fig3(df)

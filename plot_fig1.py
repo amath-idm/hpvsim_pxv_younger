@@ -52,7 +52,7 @@ def plot_fig1(msim_dict):
         ax.set_ylabel('ASR cancer incidence')
         ax.set_title(f'{int(cov_val*100)}% vaccine coverage')
         ax.axhline(y=4, color='k', ls='--')
-        if pn == 0: ax.legend()
+        if pn == 0: ax.legend(frameon=False)
 
     fig.tight_layout()
     fig_name = 'figures/vx_scens.png'
