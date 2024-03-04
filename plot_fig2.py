@@ -22,13 +22,12 @@ def preprocess_fig2(msim_dict):
     for pn, metric in enumerate(metrics):
 
         for cn, cov_val in enumerate(coverage_arr):
-            si = sc.findinds(msim_dict[base_label].year, start_year)[0]
-
             base_label = f'Adolescent: {cov_val} coverage'
+            si = sc.findinds(msim_dict[base_label].year, start_year)[0]
             base_vals = msim_dict[base_label][metric].values[si:]
 
             for en, eff_val in enumerate(efficacy_arr):
-                scen_label = f'Adolescent: {cov_val} coverage, Infants {eff_val} efficacy'
+                scen_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
                 scen_vals = msim_dict[scen_label][metric].values[si:]
 
                 n_averted = sum(base_vals - scen_vals)
@@ -36,7 +35,7 @@ def preprocess_fig2(msim_dict):
                 records += {'coverage': cov_val, 'efficacy': eff_val, f'{metric}_averted': n_averted}
 
     df = pd.DataFrame(records)
-    return
+    return df
 
 
 # %% Run as a script

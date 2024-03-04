@@ -214,7 +214,12 @@ if __name__ == '__main__':
         # Process
         scen_labels = list(vx_scenarios.keys())
         mlist = msim.split(chunks=len(scen_labels))
-        msim_dict = sc.objdict({scen_labels[i]: mlist[i].reduce(output=True).results for i in range(len(scen_labels))})
+        msim_dict = sc.objdict()
+        to_save = ['cancers', 'asr_cancer_incidence', 'cancer_deaths']
+        for i, scen_label in enumerate(scen_labels):
+            mm = mlist[i].reduce(output=True)
+            msim_dict[scen_label].sres = {metric: mm.results[metric] for metric in to_save}
+            msim_dict[scen_label].ares = mm.get_analyzer().df
         sc.saveobj(f'results/vx.scens', msim_dict)
 
     else:
