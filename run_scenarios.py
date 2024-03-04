@@ -5,7 +5,7 @@ to run.
 """
 
 
-#%% General settings
+# %% General settings
 
 import os
 
@@ -18,371 +18,204 @@ os.environ.update(
 
 # Standard imports
 import numpy as np
-import pandas as pd
 import sciris as sc
 import hpvsim as hpv
 
 # Imports from this repository
 import run_sim as rs
-import utils as ut
-import pars_scenarios as sp
-import analyzers as an
 
-# Comment out to not run
-to_run = [
-    'run_scenarios',
-    # 'plot_scenarios'
-]
-
-
+# Settings - used here and imported elsewhere
 debug = 0
-n_seeds = [3, 1][debug] # How many seeds to run per cluster
+n_seeds = [3, 1][debug]  # How many seeds to run per cluster
+coverage_arr = [0.3, 0.5, 0.7, 0.9]
+efficacy_arr = [0.5, 0.6, 0.7, 0.8, 0.9]
 
 
-#%% Functions
+# %% Create interventions
 
-def make_msims(sims, use_mean=True):
-    """
-    Utility to take a slice of sims and turn it into a multisim
-    """
+def make_st(screen_coverage=0.15, treat_coverage=0.7, start_year=2020):
+    """ Make screening & treatment intervention """
 
-    msim = hpv.MultiSim(sims)
-    msim.reduce(use_mean=use_mean)
-    i_sc, i_vx, i_s = sims[0].meta.inds
-    for s, sim in enumerate(sims):  # Check that everything except parameter set matches
-        assert i_sc == sim.meta.inds[0]
-        assert i_vx == sim.meta.inds[1]
-        assert (s == 0) or i_s != sim.meta.inds[2]
-    msim.meta = sc.objdict()
-    msim.meta.inds = [i_sc, i_vx]
-    msim.meta.vals = sc.dcp(sims[0].meta.vals)
-    msim.meta.vals.pop('seed')
+    age_range = [30, 50]
+    len_age_range = (age_range[1]-age_range[0])/2
+    model_annual_screen_prob = 1 - (1 - screen_coverage)**(1/len_age_range)
 
-    print(f'Processing multisim {msim.meta.vals.values()}...')
+    screen_eligible = lambda sim: np.isnan(sim.people.date_screened) | \
+                                  (sim.t > (sim.people.date_screened + 5 / sim['dt']))
+    screening = hpv.routine_screening(
+        prob=model_annual_screen_prob,
+        eligibility=screen_eligible,
+        start_year=start_year,
+        product='hpv',
+        age_range=age_range,
+        label='screening'
+    )
+
+    # Assign treatment
+    screen_positive = lambda sim: sim.get_intervention('screening').outcomes['positive']
+    assign_treatment = hpv.routine_triage(
+        start_year=start_year,
+        prob=1.0,
+        annual_prob=False,
+        product='tx_assigner',
+        eligibility=screen_positive,
+        label='tx assigner'
+    )
+
+    ablation_eligible = lambda sim: sim.get_intervention('tx assigner').outcomes['ablation']
+    ablation = hpv.treat_num(
+        prob=treat_coverage,
+        annual_prob=False,
+        product='ablation',
+        eligibility=ablation_eligible,
+        label='ablation'
+    )
+
+    excision_eligible = lambda sim: list(set(sim.get_intervention('tx assigner').outcomes['excision'].tolist() +
+                                             sim.get_intervention('ablation').outcomes['unsuccessful'].tolist()))
+    excision = hpv.treat_num(
+        prob=treat_coverage,
+        annual_prob=False,
+        product='excision',
+        eligibility=excision_eligible,
+        label='excision'
+    )
+
+    radiation_eligible = lambda sim: sim.get_intervention('tx assigner').outcomes['radiation']
+    radiation = hpv.treat_num(
+        prob=treat_coverage/4,  # assume an additional dropoff in CaTx coverage
+        annual_prob=False,
+        product=hpv.radiation(),
+        eligibility=radiation_eligible,
+        label='radiation'
+    )
+
+    st_intvs = [screening, assign_treatment, ablation, excision, radiation]
+
+    return st_intvs
+
+
+def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_year=2025):
+
+    age_range = (9, 14)
+    catchup_age = (age_range[0]+1, age_range[1])
+    routine_age = (age_range[0], age_range[0]+1)
+    prod = hpv.default_vx(prod_name=product)
+    eligibility = lambda sim: (sim.people.doses == 0)
+
+    vx_scenarios = dict()
+
+    # Baseline
+    vx_scenarios['Baseline'] = []
+
+    # Construct the adolescent scenarios
+    for cov_val in coverage_arr:
+        label = f'Adolescent: {cov_val} coverage'
+        routine_vx = hpv.routine_vx(
+            prob=cov_val,
+            start_year=start_year,
+            product=prod,
+            age_range=routine_age,
+            eligibility=eligibility,
+            label='Routine vx'
+        )
+
+        catchup_vx = hpv.campaign_vx(
+            prob=cov_val,
+            years=start_year,
+            product=prod,
+            age_range=catchup_age,
+            eligibility=eligibility,
+            label='Catchup vx'
+        )
+
+        vx_scenarios[label] = [routine_vx, catchup_vx]
+
+    # Construct all the infant scenarios
+    for cov_val in coverage_arr:
+        for eff_val in efficacy_arr:
+            label = f'Infants: {cov_val} coverage, {eff_val} efficacy'
+
+        routine_vx = hpv.routine_vx(
+            prob=cov_val,
+            years=[start_year, start_year+9],
+            product=prod,
+            age_range=routine_age,
+            eligibility=eligibility,
+            label='Routine vx'
+        )
+
+        catchup_vx = hpv.campaign_vx(
+            prob=cov_val,
+            years=start_year,
+            product=prod,
+            age_range=catchup_age,
+            eligibility=eligibility,
+            label='Catchup vx'
+        )
+
+        infant_prod = hpv.default_vx(prod_name=product)
+        infant_prod.imm_init = dict(dist='beta_mean', par1=eff_val, par2=0.025)
+        infant_vx = hpv.routine_vx(
+            prob=cov_val,
+            start_year=start_year,
+            product=infant_prod,
+            age_range=(0, 1),
+            label='Infant vx'
+        )
+
+        these_intvs = [routine_vx, catchup_vx, infant_vx]
+        vx_scenarios[label] = these_intvs
+
+    return vx_scenarios
+
+
+def make_sims(calib_pars=None, vx_scenarios=None):
+    """ Set up scenarios """
+
+    st_intv = make_st()
+
+    all_msims = sc.autolist()
+    for name, vx_intv in vx_scenarios.items():
+        sims = sc.autolist()
+        for seed in range(n_seeds):
+            interventions = vx_intv + st_intv
+            sim = rs.make_sim(calib_pars=calib_pars, debug=debug, interventions=interventions, end=2100, seed=seed)
+            sim.label = name
+            sims += sim
+        all_msims += hpv.MultiSim(sims)
+
+    msim = hpv.MultiSim.merge(all_msims, base=False)
 
     return msim
 
-def run_scens(location=None, screen_intvs=None, vx_intvs=None, # Input data
-              debug=0, n_seeds=n_seeds, verbose=-1,# Sim settings
-              calib_filestem=''
-              ):
-    """
-    Run vaccination scanerios
-    """
 
-    # Set up iteration arguments
-    ikw = []
-    count = 0
-    n_sims = len(screen_intvs) * len(vx_intvs) * n_seeds
-
-    for i_sc, sc_label, screen_scen_pars in screen_intvs.enumitems():
-        for i_vx, vx_label, vx_scen_pars in vx_intvs.enumitems():
-            for i_s in range(n_seeds):  # n samples per cluster
-                count += 1
-                meta = sc.objdict()
-                meta.count = count
-                meta.n_sims = n_sims
-                meta.inds = [i_sc, i_vx, i_s]
-                meta.vals = sc.objdict(sc.mergedicts(screen_scen_pars, vx_scen_pars,
-                                                     dict(seed=i_s, screen_scen=sc_label,
-                                                          vx_scen=vx_label)))
-                ikw.append(sc.objdict(screen_intv=screen_scen_pars, vx_intv=vx_scen_pars,
-                                      seed=i_s))
-                ikw[-1].meta = meta
-
-    # Actually run
-    sc.heading(f'Running {len(ikw)} scenario sims...')
-    calib_pars = sc.loadobj(f'results/{location}_pars{calib_filestem}.obj')
-    kwargs = dict(calib_pars=calib_pars, verbose=verbose, debug=debug, location=location,
-                  econ_analyzer=True, end=2100, n_agents=50e3)
-    n_workers = 40
-    all_sims = sc.parallelize(rs.run_sim, iterkwargs=ikw, kwargs=kwargs, ncpus=n_workers)
-
-    # Rearrange sims
-    sims = np.empty((len(screen_intvs), len(vx_intvs), n_seeds), dtype=object)
-    econdfs = sc.autolist()
-    for sim in all_sims:  # Unflatten array
-        i_sc, i_vx, i_s = sim.meta.inds
-        sims[i_sc, i_vx, i_s] = sim
-        if i_s == 0:
-            econdf = sim.get_analyzer(an.econ_analyzer).df
-            econdf['location'] = location
-            econdf['seed'] = i_s
-            econdf['screen_scen'] = sim.meta.vals['screen_scen']
-            econdf['vx_scen'] = sim.meta.vals['vx_scen']
-            econdfs += econdf
-        sim['analyzers'] = []  # Remove the analyzer so we don't need to reduce it
-    econ_df = pd.concat(econdfs)
-    sc.saveobj(f'{ut.resfolder}/{location}_econ.obj', econ_df)
-
-    # Prepare to convert sims to msims
-    all_sims_for_multi = []
-    for i_sc in range(len(screen_intvs)):
-        for i_vx in range(len(vx_intvs)):
-            sim_seeds = sims[i_sc, i_vx, :].tolist()
-            all_sims_for_multi.append(sim_seeds)
-
-    # Convert sims to msims
-    msims = np.empty((len(screen_intvs), len(vx_intvs)), dtype=object)
-    all_msims = sc.parallelize(make_msims, iterarg=all_sims_for_multi)
-    print('finished making msims')
-
-    # Now strip out all the results and place them in a dataframe
-    dfs = sc.autolist()
-    for msim in all_msims:
-        i_sc, i_vx = msim.meta.inds
-        msims[i_sc, i_vx] = msim
-        df = pd.DataFrame()
-        df['year']                      = msim.results['year']
-        df['cancers']                   = msim.results['cancers'][:] # TODO: process in a loop
-        df['cancers_low']               = msim.results['cancers'].low
-        df['cancers_high']              = msim.results['cancers'].high
-        df['asr_cancer_incidence']      = msim.results['asr_cancer_incidence'][:]
-        df['asr_cancer_incidence_low']  = msim.results['asr_cancer_incidence'].low
-        df['asr_cancer_incidence_high'] = msim.results['asr_cancer_incidence'].high
-        df['cancer_deaths']             = msim.results['cancer_deaths'][:]
-        df['cancer_deaths_low']         = msim.results['cancer_deaths'].low
-        df['cancer_deaths_high']        = msim.results['cancer_deaths'].high
-        df['n_vaccinated']              = msim.results['n_vaccinated'][:]
-        df['n_vaccinated_low']          = msim.results['n_vaccinated'].low
-        df['n_vaccinated_high']         = msim.results['n_vaccinated'].high
-        df['location'] = location
-
-        # Store metadata about run
-        df['vx_scen'] = msim.meta.vals['vx_scen']
-        df['screen_scen'] = msim.meta.vals['screen_scen']
-        dfs += df
-
-    alldf = pd.concat(dfs)
-    sc.saveobj(f'{ut.resfolder}/{location}.obj', alldf)
-
-    return alldf, msims
+def run_sims(calib_pars=None, vx_scenarios=None, verbose=0.2):
+    """ Run the simulations """
+    msim = make_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
+    msim.run(verbose=verbose)
+    return msim
 
 
-
-#%% Run as a script
+# %% Run as a script
 if __name__ == '__main__':
 
     T = sc.timer()
+    do_run = True
 
-    #################################################################
-    # RUN AND PLOT SCENARIOS
-    #################################################################
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
+    if do_run:
+        calib_pars = sc.loadobj('results/nigeria_pars_nov13.obj')
+        vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
+        msim = run_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
 
-    if 'run_scenarios' in to_run:
-            calib_filestem = '_nov13'
+        # Process
+        scen_labels = list(vx_scenarios.keys())
+        mlist = msim.split(chunks=len(scen_labels))
+        msim_dict = sc.objdict({scen_labels[i]: mlist[i].reduce(output=True).results for i in range(len(scen_labels))})
+        sc.saveobj(f'results/vx.scens', msim_dict)
 
-            # Construct the scenarios
-            # Screening scenarios    : No screening, 35% coverage, 70% coverage
-            # Vaccine scenarios      : No vaccine, 50% coverage, 90% coverage
-            # TxVx                   : No txvx, use case 1 w/ different efficacy values
-            screen_scens = sc.objdict({
-                # 'No screening': {},
-                'HPV, 15% sc cov': dict(
-                    primary='hpv',
-                    screen_coverage=0.15,
-                ),
-                # 'HPV, 70% sc cov, 90% tx cov': dict(
-                #     primary='hpv',
-                #     screen_coverage=0.7,
-                #     ltfu=0.1
-                # ),
-            })
+    else:
+        msim_dict = sc.loadobj('results/vx.scens')
 
-            vx_scens = sc.objdict({
-                'No vaccine': {},
-
-
-                'Vx, 30% cov, 9-14': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14)
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 30% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.3,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
-
-
-
-                'Vx, 50% cov, 9-14': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14)
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 50% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.5,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
-
-                'Vx, 70% cov, 9-14': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14)
-                ),
-                'Vx, 70% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 70% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 70% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 70% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 70% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.7,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
-
-                'Vx, 90% cov, 9-14': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14)
-                ),
-                'Vx, 90% cov, 9-14, 90% cov, infant, 90% efficacy': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.9
-                ),
-                'Vx, 90% cov, 9-14, 90% cov, infant, 80% efficacy': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.8
-                ),
-                'Vx, 90% cov, 9-14, 90% cov, infant, 70% efficacy': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.7
-                ),
-                'Vx, 90% cov, 9-14, 90% cov, infant, 60% efficacy': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14),
-                    infant=True,
-                    infant_efficacy=0.6
-                ),
-                'Vx, 90% cov, 9-14, 90% cov, infant, 50% efficacy': dict(
-                    vx_coverage=0.9,
-                    age_range=(9, 14),
-                    infant=True,
-                ),
-
-            })
-
-            alldf, msims = run_scens(screen_intvs=screen_scens, vx_intvs=vx_scens,
-                                     location=location, debug=debug, calib_filestem=calib_filestem)
-
-    elif 'plot_scenarios' in to_run:
-        locations = [
-            # 'india',  # 0
-            # 'indonesia',  # 1
-            'nigeria',  # 2
-            # 'tanzania',  # 3
-            # 'bangladesh',  # 4
-            # 'myanmar',  # 5
-            # 'uganda',  # 6
-            # 'ethiopia',  # 7
-            # 'drc',  # 8
-            # 'kenya'  # 9
-        ]
-
-        for location in locations:
-            ut.plot_vx_impact(
-                location=location,
-                background_scen={'screen_scen': 'HPV, 15% sc cov'},
-                adolescent_coverages=[20, 30, 40, 50, 60],
-                infant_efficacies=[50, 60, 70, 80, 90],
-                infant_coverage=90
-            )
-
-            ut.plot_vx_impact_ts(
-                location=location,
-                background_scen={'screen_scen': 'HPV, 15% sc cov'},
-                adolescent_coverages=[20, 30, 40, 50, 60],
-                infant_efficacies=[50, 60, 70, 80, 90],
-                infant_coverage=90
-            )
-
-            ut.plot_CEA(
-                location=location,
-                background_scen={'screen_scen': 'HPV, 15% sc cov'},
-                adolescent_coverages=[20, 30, 40, 50, 60],
-                infant_efficacies=[50, 60, 70, 80, 90],
-                infant_coverage=90
-            )
-
-            # ut.plot_resource_use(
-            #     location=location,
-            #     background_scen={'screen_scen': 'HPV, 15% sc cov'},
-            #     adolescent_coverages=[20, 40, 60],
-            #     infant_efficacies=[50, 70, 90],
-            #     infant_coverage=90
-            # )
-
-
-        print('done')
+    print('Done.')
