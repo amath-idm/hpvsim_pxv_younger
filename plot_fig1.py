@@ -39,13 +39,13 @@ def plot_fig1(msim_dict):
 
         # Plot adolescents
         adolescent_label = f'Adolescent: {cov_val} coverage'
-        mres = msim_dict[adolescent_label].sres
+        mres = msim_dict[adolescent_label]
         si = sc.findinds(mres.year, start_year)[0]
         ax = plot_single(ax, mres, to_plot, si, 'k', label='Adolescents only')
 
         for ie, eff_val in enumerate(efficacy_arr):
             infant_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
-            mres = msim_dict[infant_label].sres
+            mres = msim_dict[infant_label]
             ax = plot_single(ax, mres, to_plot, si, colors[ie], label=f'Infants, {int(eff_val*100)}% efficacy')
 
         ax.set_ylim(bottom=0, top=23)
@@ -65,7 +65,7 @@ def plot_fig1(msim_dict):
 if __name__ == '__main__':
 
     # Load scenarios and construct figure
-    msim_dict = sc.loadobj('results/vx.scens')
+    msim_dict = sc.loadobj('results/vx_scens.obj')
     plot_fig1(msim_dict)
 
 
