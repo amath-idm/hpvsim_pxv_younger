@@ -136,36 +136,36 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
         for eff_val in efficacy_arr:
             label = f'Infants: {cov_val} coverage, {eff_val} efficacy'
 
-        routine_vx = hpv.routine_vx(
-            prob=cov_val,
-            years=[start_year, start_year+9],
-            product=prod,
-            age_range=routine_age,
-            eligibility=eligibility,
-            label='Routine vx'
-        )
+            routine_vx = hpv.routine_vx(
+                prob=cov_val,
+                years=[start_year, start_year+9],
+                product=prod,
+                age_range=routine_age,
+                eligibility=eligibility,
+                label='Routine vx'
+            )
 
-        catchup_vx = hpv.campaign_vx(
-            prob=cov_val,
-            years=start_year,
-            product=prod,
-            age_range=catchup_age,
-            eligibility=eligibility,
-            label='Catchup vx'
-        )
+            catchup_vx = hpv.campaign_vx(
+                prob=cov_val,
+                years=start_year,
+                product=prod,
+                age_range=catchup_age,
+                eligibility=eligibility,
+                label='Catchup vx'
+            )
 
-        infant_prod = hpv.default_vx(prod_name=product)
-        infant_prod.imm_init = dict(dist='beta_mean', par1=eff_val, par2=0.025)
-        infant_vx = hpv.routine_vx(
-            prob=cov_val,
-            start_year=start_year,
-            product=infant_prod,
-            age_range=(0, 1),
-            label='Infant vx'
-        )
+            infant_prod = hpv.default_vx(prod_name=product)
+            infant_prod.imm_init = dict(dist='beta_mean', par1=eff_val, par2=0.025)
+            infant_vx = hpv.routine_vx(
+                prob=cov_val,
+                start_year=start_year,
+                product=infant_prod,
+                age_range=(0, 1),
+                label='Infant vx'
+            )
 
-        these_intvs = [routine_vx, catchup_vx, infant_vx]
-        vx_scenarios[label] = these_intvs
+            these_intvs = [routine_vx, catchup_vx, infant_vx]
+            vx_scenarios[label] = these_intvs
 
     return vx_scenarios
 
