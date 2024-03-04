@@ -158,7 +158,7 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
             infant_prod = hpv.default_vx(prod_name=product)
             infant_prod.imm_init = dict(dist='beta_mean', par1=eff_val, par2=0.025)
             infant_vx = hpv.routine_vx(
-                prob=cov_val,
+                prob=0.9,
                 start_year=start_year,
                 product=infant_prod,
                 age_range=(0, 1),
