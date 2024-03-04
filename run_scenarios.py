@@ -202,7 +202,8 @@ def run_sims(calib_pars=None, vx_scenarios=None, verbose=0.2):
 if __name__ == '__main__':
 
     T = sc.timer()
-    do_run = False
+    do_run = True
+    do_save = False
     do_process = True
 
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
@@ -210,29 +211,30 @@ if __name__ == '__main__':
         calib_pars = sc.loadobj('results/nigeria_pars_nov13.obj')
         vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
         msim = run_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
-        msim.save('results/vs.msim')
 
-    if do_process:
-        msim = sc.loadobj('results/vs.msim')
-        metrics = ['year', 'asr_cancer_incidence', 'cancers', 'cancer_deaths']
+        if do_save: msim.save('results/vs.msim')
 
-        # Process results
-        vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
-        scen_labels = list(vx_scenarios.keys())
-        mlist = msim.split(chunks=len(scen_labels))
+        if do_process:
 
-        msim_dict = sc.objdict()
-        for si, scen_label in enumerate(scen_labels):
-            reduced_sim = mlist[si].reduce(output=True)
-            mres = sc.objdict({metric: reduced_sim.results[metric] for metric in metrics})
-            mres['dalys'] = reduced_sim.get_analyzer().df
+            metrics = ['year', 'asr_cancer_incidence', 'cancers', 'cancer_deaths']
 
-            for ii, intv in enumerate(reduced_sim['interventions']):
-                intv_label = intv.label
-                mres[intv_label] = reduced_sim['interventions'][ii].n_products_used
+            # Process results
+            vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
+            scen_labels = list(vx_scenarios.keys())
+            mlist = msim.split(chunks=len(scen_labels))
 
-            msim_dict[scen_label] = mres
+            msim_dict = sc.objdict()
+            for si, scen_label in enumerate(scen_labels):
+                reduced_sim = mlist[si].reduce(output=True)
+                mres = sc.objdict({metric: reduced_sim.results[metric] for metric in metrics})
+                mres['dalys'] = reduced_sim.get_analyzer().df
 
-        sc.saveobj(f'results/vx_scens.obj', msim_dict)
+                for ii, intv in enumerate(reduced_sim['interventions']):
+                    intv_label = intv.label
+                    mres[intv_label] = reduced_sim['interventions'][ii].n_products_used
+
+                msim_dict[scen_label] = mres
+
+            sc.saveobj(f'results/vx_scens.obj', msim_dict)
 
     print('Done.')
