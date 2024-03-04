@@ -38,7 +38,7 @@ def make_sim(calib_pars=None, debug=0, interventions=None, datafile=None, seed=1
 
     # Basic parameters
     pars = sc.objdict(
-        n_agents=[10e3, 1e3][debug],
+        n_agents=[20e3, 1e3][debug],
         dt=[0.25, 1.0][debug],
         start=[1960, 1980][debug],
         end=end,

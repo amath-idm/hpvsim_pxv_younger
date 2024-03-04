@@ -208,7 +208,8 @@ if __name__ == '__main__':
         calib_pars = sc.loadobj('results/nigeria_pars_nov13.obj')
         vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
         msim = run_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
-
+        msim.save('results/vs.msim')
+        
         # Process
         scen_labels = list(vx_scenarios.keys())
         mlist = msim.split(chunks=len(scen_labels))

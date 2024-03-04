@@ -35,26 +35,27 @@ def plot_fig1(msim_dict):
 
     for pn, cov_val in enumerate(coverage_arr):
 
-        ax = axes[pn] if n_plots>1 else axes
+        ax = axes[pn] if n_plots > 1 else axes
 
         # Plot adolescents
         adolescent_label = f'Adolescent: {cov_val} coverage'
         mres = msim_dict[adolescent_label]
         si = sc.findinds(mres.year, start_year)[0]
-        ax = plot_single(ax, mres, to_plot, si, 'k', label=adolescent_label)
+        ax = plot_single(ax, mres, to_plot, si, 'k', label='Adolescents')
 
         for ie, eff_val in enumerate(efficacy_arr):
             infant_label = f'Infants: {cov_val} coverage, {eff_val} efficacy'
             mres = msim_dict[infant_label]
-            ax = plot_single(ax, mres, to_plot, si, colors[ie], label=infant_label)
+            ax = plot_single(ax, mres, to_plot, si, colors[ie], label=f'Infants, {int(eff_val*100)}% efficacy')
 
-    ax.set_ylim(bottom=0)
-    ax.set_title('ASR cancer incidence')
-    pl.legend()
+        ax.set_ylim(bottom=0, top=22)
+        ax.set_ylabel('ASR cancer incidence')
+        ax.set_title(f'{int(cov_val*100)}% vaccine coverage')
+        if pn==0: ax.legend()
+
     fig.tight_layout()
     fig_name = 'figures/vx_scens.png'
     sc.savefig(fig_name, dpi=100)
-    fig.show()
 
     return
 
