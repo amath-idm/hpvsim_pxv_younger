@@ -28,13 +28,13 @@ def preprocess_data(msim_dict, cost_dict):
             scen_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
             scen_dalys = msim_dict[scen_label].dalys.dalys.values[di:]
             dalys_averted = sum(base_dalys - scen_dalys)
-            records += {'coverage': cov_val, 'efficacy': eff_val, 'metric':'DALYs', 'val': dalys_averted}
+            records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric':'DALYs', 'val': dalys_averted}
 
             for pn, metric in enumerate(metrics):
                 base_vals = msim_dict[base_label][metric].values[si:]
                 scen_vals = msim_dict[scen_label][metric].values[si:]
                 n_averted = sum(base_vals - scen_vals)
-                records += {'coverage': cov_val, 'efficacy': eff_val, 'metric': f'{metric.replace("_"," ").capitalize()}', 'val': n_averted}
+                records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric': f'{metric.replace("_"," ").capitalize()}', 'val': n_averted}
 
             # Costs
             scen_costs = 0
@@ -49,7 +49,7 @@ def preprocess_data(msim_dict, cost_dict):
             total_base_cost = sum([i / 1.03 ** t for t, i in enumerate(base_costs)])
             additional_costs = total_scen_cost - total_base_cost
 
-            records += {'coverage': cov_val, 'efficacy': eff_val, 'metric': 'cost', 'val': additional_costs}
+            records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric': 'cost', 'val': additional_costs}
 
     df = pd.DataFrame.from_dict(records)
 
@@ -67,7 +67,7 @@ def plot_fig2(df):
         y="val",
         row="metric",
         hue="coverage",
-        palette="rocket",
+        palette="rocket_r",
         sharey=False,
         height=5, aspect=3,
     )
@@ -75,7 +75,7 @@ def plot_fig2(df):
     g.set_titles("{row_name} averted")
 
     for ax in g.axes.flat:
-        ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x), ',')))
+        ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda y, p: format(int(y), ',')))
     g.legend.set_title("Adolescent\ncoverage")
 
     fig_name = 'figures/vx_impact.png'
@@ -85,31 +85,35 @@ def plot_fig2(df):
 
 def plot_fig3(df):
     sns.set_style("whitegrid")
-    ut.set_font(14)
+    ut.set_font(24)
     df2 = df.loc[df['metric'].isin(['DALYs', 'cost'])]
     df2 = df2.groupby(['coverage', 'efficacy', 'metric']).val.first().unstack().reset_index()
     df2['Cost per DALY averted'] = df2['cost'] / df2['DALYs']
     df2['DALYs'] = df2['DALYs']/1e6
-    df2['Adolescent coverage'] = df2['coverage']*100
-    dfplot = df2.loc[df2['Cost per DALY averted']>=0]
+    df2['Adolescent coverage'] = df2['coverage']
+    df2['Infant efficacy'] = df2['efficacy']
+    dfplot = df2.loc[df2['Cost per DALY averted'] >= 0]
+    dfplot = dfplot.loc[dfplot['Adolescent coverage'].isin([20,40,60,80])]
 
-    g = sns.FacetGrid(
+    fig, ax = plt.subplots(1, 1, figsize=(11, 10))
+    sns.scatterplot(
+        ax=ax,
         data=dfplot,
-        col="Adolescent coverage",
-        col_wrap=2,
-        hue="efficacy",
-        palette="rocket",
+        x="DALYs",
+        y="Cost per DALY averted",
+        hue="Infant efficacy",
+        palette='viridis_r',
+        size="Adolescent coverage",
+        sizes=(20, 500),
+        legend="full"
     )
-    g.map(sns.scatterplot, "DALYs", "Cost per DALY averted")
-    g.add_legend(frameon=False)
-    g.legend.set_title("Infant\nefficacy")
-    for ax in g.axes.flat:
-        ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x), ',')))
-        ax.xaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x))))
-        ax.set_xlim(0, 20)
-
+    ax.legend(frameon=False)
+    ax.set_xlabel('DALYs averted (M), 2025-2100')
+    ax.set_ylabel('Incremental cost / DALY averted (USD), 2025-2100')
+    fig.tight_layout()
     fig_name = 'figures/vx_econ_impact.png'
     sc.savefig(fig_name, dpi=100)
+
     return df2
 
 
