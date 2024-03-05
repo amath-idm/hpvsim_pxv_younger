@@ -25,6 +25,10 @@ The repository is organized as follows:
 ### Additional utility scripts
 - `utils.py` contains additional miscellaneous utilities for numerical calculations and creating plots.
 
+### Data and results
+- the contents of the `data` folder are not currently in use, but are kept here for completeness. These were used during the initial calibration of the model.
+- the `results` folder contains the outputs from running `run_scenarios`.
+
 
 ## Installation
 
