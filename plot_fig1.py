@@ -23,8 +23,9 @@ def plot_fig1(msim_dict):
 
     ut.set_font(16)
     colors = sc.vectocolor(len(efficacy_arr), reverse=True)
+    plot_coverage_arr = coverage_arr[1::2]  # which ones to plot
 
-    n_plots = len(coverage_arr)
+    n_plots = len(plot_coverage_arr)
     n_rows, n_cols = sc.get_rows_cols(n_plots)
     fig, axes = pl.subplots(n_rows, n_cols, figsize=(11, 10))
     if n_plots > 1: axes = axes.flatten()
@@ -33,7 +34,7 @@ def plot_fig1(msim_dict):
     start_year = 2020
     to_plot = 'asr_cancer_incidence'
 
-    for pn, cov_val in enumerate(coverage_arr):
+    for pn, cov_val in enumerate(plot_coverage_arr):
 
         ax = axes[pn] if n_plots > 1 else axes
 
@@ -52,7 +53,7 @@ def plot_fig1(msim_dict):
         ax.set_ylabel('ASR cancer incidence')
         ax.set_title(f'{int(cov_val*100)}% vaccine coverage')
         ax.axhline(y=4, color='k', ls='--')
-        if pn == 0: ax.legend(frameon=False)
+        if pn == 0: ax.legend()
 
     fig.tight_layout()
     fig_name = 'figures/vx_scens.png'
