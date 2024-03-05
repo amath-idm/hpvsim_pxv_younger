@@ -10,6 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tkr
 
+
 def preprocess_data(msim_dict, cost_dict):
 
     # What to store
@@ -46,9 +47,9 @@ def preprocess_data(msim_dict, cost_dict):
 
             total_scen_cost = sum([i / 1.03 ** t for t, i in enumerate(scen_costs)])
             total_base_cost = sum([i / 1.03 ** t for t, i in enumerate(base_costs)])
-            costs_averted = total_base_cost - total_scen_cost
+            additional_costs = total_scen_cost - total_base_cost
 
-            records += {'coverage': cov_val, 'efficacy': eff_val, 'metric': 'cost', 'val': costs_averted}
+            records += {'coverage': cov_val, 'efficacy': eff_val, 'metric': 'cost', 'val': additional_costs}
 
     df = pd.DataFrame.from_dict(records)
 
@@ -90,9 +91,10 @@ def plot_fig3(df):
     df2['Cost per DALY averted'] = df2['cost'] / df2['DALYs']
     df2['DALYs'] = df2['DALYs']/1e6
     df2['Adolescent coverage'] = df2['coverage']*100
+    dfplot = df2.loc[df2['Cost per DALY averted']>=0]
 
     g = sns.FacetGrid(
-        data=df2,
+        data=dfplot,
         col="Adolescent coverage",
         col_wrap=2,
         hue="efficacy",
@@ -104,7 +106,7 @@ def plot_fig3(df):
     for ax in g.axes.flat:
         ax.yaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x), ',')))
         ax.xaxis.set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x))))
-        ax.set_xlim(-20, 20)
+        ax.set_xlim(0, 20)
 
     fig_name = 'figures/vx_econ_impact.png'
     sc.savefig(fig_name, dpi=100)

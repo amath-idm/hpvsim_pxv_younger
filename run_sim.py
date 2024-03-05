@@ -17,9 +17,6 @@ import numpy as np
 import sciris as sc
 import hpvsim as hpv
 
-# Imports from this repository
-import analyzers as an
-
 # %% Settings and filepaths
 # Debug switch
 debug = 1  # Run with smaller population sizes and in serial
