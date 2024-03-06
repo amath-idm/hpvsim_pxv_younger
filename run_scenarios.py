@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
     T = sc.timer()
     do_run = True
-    do_save = False
+    do_save = True
     do_process = False
 
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
