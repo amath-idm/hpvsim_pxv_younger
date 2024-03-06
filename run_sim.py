@@ -83,7 +83,7 @@ def make_sim(calib_pars=None, debug=0, interventions=None, datafile=None, seed=1
     if calib_pars is not None:
         pars = sc.mergedicts(pars, calib_pars)
 
-    analyzers = [hpv.daly_computation(start=2000, life_expectancy=88.8)]
+    analyzers = [hpv.dalys(start=2000, life_expectancy=88.8)]
 
     # Interventions
     sim = hpv.Sim(pars=pars, interventions=interventions, analyzers=analyzers, datafile=datafile)
