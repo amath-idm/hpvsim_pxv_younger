@@ -21,12 +21,12 @@ def preprocess_data(msim_dict, cost_dict):
     for cn, cov_val in enumerate(coverage_arr):
         base_label = f'Adolescent: {cov_val} coverage'
         si = sc.findinds(msim_dict[base_label].year, start_year)[0]
-        di = sc.findinds(msim_dict[base_label].dalys.index.values, start_year)[0]
+        di = sc.findinds(msim_dict[base_label].daly_years, start_year)[0]
         base_dalys = msim_dict[base_label].dalys.dalys.values[di:]
 
         for en, eff_val in enumerate(efficacy_arr):
             scen_label = f'Adolescents: {cov_val} coverage, Infants: {eff_val} efficacy'
-            scen_dalys = msim_dict[scen_label].dalys.dalys.values[di:]
+            scen_dalys = msim_dict[scen_label].dalys[di:]
             dalys_averted = sum(base_dalys - scen_dalys)
             records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric':'DALYs', 'val': dalys_averted}
 

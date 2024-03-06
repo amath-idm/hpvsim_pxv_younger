@@ -204,7 +204,7 @@ if __name__ == '__main__':
     T = sc.timer()
     do_run = True
     do_save = False
-    do_process = True
+    do_process = False
 
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
     if do_run:
@@ -227,7 +227,8 @@ if __name__ == '__main__':
             for si, scen_label in enumerate(scen_labels):
                 reduced_sim = mlist[si].reduce(output=True)
                 mres = sc.objdict({metric: reduced_sim.results[metric] for metric in metrics})
-                mres['dalys'] = reduced_sim.get_analyzer().df
+                mres['dalys'] = reduced_sim.get_analyzer().dalys
+                mres['daly_years'] = reduced_sim.get_analyzer().years
 
                 for ii, intv in enumerate(reduced_sim['interventions']):
                     intv_label = intv.label
