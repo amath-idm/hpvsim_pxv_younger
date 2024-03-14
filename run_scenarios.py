@@ -28,7 +28,7 @@ import run_sim as rs
 debug = 0
 n_seeds = [3, 1][debug]  # How many seeds to run per cluster
 coverage_arr = np.arange(.1, 1, .1)
-efficacy_arr = np.arange(.5, 1, .1)
+efficacy_arr = np.arange(.1, 1, .1)
 
 
 # %% Create interventions
@@ -202,7 +202,7 @@ def run_sims(calib_pars=None, vx_scenarios=None, verbose=0.2):
 if __name__ == '__main__':
 
     T = sc.timer()
-    do_run = False
+    do_run = True
     do_save = False
     do_process = True
 
