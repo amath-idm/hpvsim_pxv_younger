@@ -83,44 +83,6 @@ def plot_fig2(df):
     return
 
 
-def plot_fig2_heat(df):
-
-    import numpy as np
-    ut.set_font(30)
-
-    fig, axes = plt.subplots(1, 3, figsize=(15, 6))
-    plot_list = ['Cancers', 'Cancer_deaths', 'DALYs']
-    cmap = 'plasma'
-
-    for pn, to_plot in enumerate(plot_list):
-
-        # Create xy grid
-        x = df.coverage.unique()
-        y = df.efficacy.unique()
-        xi = np.linspace(x[0], x[-1], 20)
-        yi = np.linspace(y[0], y[-1], 20)
-        xx, yy = np.meshgrid(xi, yi)
-
-        z = df.loc[df.metric == to_plot].val.values
-        z_min = min(z)
-        z_max = max(z)
-        zz = sc.gauss2d(x, y, z, xi, yi, scale=1, xscale=1, yscale=1, grid=True)
-        scolors = sc.vectocolor(z, cmap=cmap, minval=z_min, maxval=z_max)
-
-        # Plot heatmap
-        ax = axes[pn]
-        ima = ax.contourf(xx, yy, zz, cmap=cmap) #, levels=np.linspace(z_min, z_max, npts))
-
-        # # Colorbar
-        # axc = fig.add_subplot(gs[rn, cn+1])
-        # pl.colorbar(ima, cax=axc)
-
-    fig_name = 'figures/vx_impact_heat.png'
-    sc.savefig(fig_name, dpi=100)
-
-    return
-
-
 def plot_fig3(df):
     sns.set_style("whitegrid")
     ut.set_font(24)
@@ -170,6 +132,5 @@ if __name__ == '__main__':
     })
     df = preprocess_data(msim_dict, cost_dict)
 
-    # plot_fig2(df)
-    # df2 = plot_fig3(df)
-    plot_fig2_heat(df)
+    plot_fig2(df)
+    df2 = plot_fig3(df)
