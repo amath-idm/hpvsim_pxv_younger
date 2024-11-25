@@ -290,10 +290,10 @@ if __name__ == '__main__':
 
     # List of what to run
     to_run = [
-        'run_sim',
+        # 'run_sim',
         # 'get_behavior',
         # 'plot_behavior',
-        # 'run_calib',
+        'run_calib',
         # 'plot_calib'
         # 'run_parsets'
     ]
