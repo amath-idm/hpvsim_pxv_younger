@@ -103,7 +103,6 @@ class age_causal(hpv.Analyzer):
         self.age_cancer = []
         self.age_cin = []
 
-
     def apply(self, sim):
         if sim.yearvec[sim.t] >= self.start_year:
             cancer_genotypes, cancer_inds = (sim.people.date_cancerous == sim.t).nonzero()
