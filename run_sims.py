@@ -90,7 +90,9 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
     if calib_pars is not None:
         pars = sc.mergedicts(pars, calib_pars)
 
-    # Interventions
+    if analyzers is None:
+        analyzers = []
+
     sim = hpv.Sim(pars=pars, interventions=interventions, analyzers=analyzers, datafile=datafile)
 
     return sim
