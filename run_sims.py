@@ -18,7 +18,7 @@ debug = 0  # Run with smaller population sizes and in serial
 do_shrink = True  # Do not keep people when running sims (saves memory)
 
 # Run settings
-n_trials    = [10000, 2][debug]  # How many trials to run for calibration
+n_trials    = [5000, 2][debug]  # How many trials to run for calibration
 n_workers   = [50, 1][debug]    # How many cores to use
 # storage     = ["mysql://hpvsim_user@localhost/hpvsim_newdb", None][debug]  # Storage for calibrations
 storage = None
@@ -57,13 +57,9 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
     #   Prop_active: 3.1, 14.5, 30.1, 51.9, 70.1
     # For fitting, see https://www.researchsquare.com/article/rs-3074559/v1
     pars.debut = dict(
-        f=dict(dist='lognormal', par1=15., par2=2.5),
-        m=dict(dist='lognormal', par1=18., par2=3.0),
+        f=dict(dist='lognormal', par1=16., par2=4),
+        m=dict(dist='lognormal', par1=18., par2=4),
     )
-    # pars.debut = dict(
-    #     f=dict(dist='lognormal', par1=17.41, par2=2.75),
-    #     m=dict(dist='lognormal', par1=17.91, par2=2.83),
-    # )
 
     # Participation in marital and casual relationships
     # Derived to fit 2018 DHS data
@@ -71,9 +67,10 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
     pars.layer_probs = dict(
         m=np.array([
             # Share of people of each age who are married
-            [0, 5, 10,      15,     20,     25,     30,     35,     40,     45,   50,   55,   60,   65,    70,   75],
-            [0, 0,  0,  0.1596, 0.4466, 0.5845, 0.6139, 0.6202, 0.6139, 0.5726, 0.35, 0.21, 0.14, 0.07, 0.035, 0.007],
-            [0, 0,  0,   0.228,  0.638,  0.835,  0.877,  0.886,  0.877,  0.818,  0.5,  0.3,  0.2,  0.1,  0.05, 0.01 ],
+            [0, 5, 10,    15,     20,     25,     30,     35,     40,     45,   50,   55,   60,   65,    70,   75],
+            # [0, 0,  0,  0.1596, 0.4466, 0.5845, 0.6139, 0.6202, 0.6139, 0.5726, 0.35, 0.21, 0.14, 0.07, 0.035, 0.007],
+            [0, 0,  0,  0.15,     0.15,    0.15,    0.15,    0.15,   0.2,    0.3,  0.4,  0.4,  0.2, 0.07, 0.035, 0.007],
+            [0, 0,  0,  0.20,     0.15,    0.15,    0.15,    0.2,    0.2,    0.4,  0.4,  0.4,  0.2,  0.1,  0.05, 0.01 ],
         ]),
         c=np.array([
             # Share of people of each age in casual partnerships
@@ -299,10 +296,9 @@ if __name__ == '__main__':
     to_run = [
         # 'run_sim',
         # 'get_behavior',
-        # 'plot_behavior',
-        # 'run_calib',
+        'run_calib',
         # 'plot_calib'
-        'run_parsets'
+        # 'run_parsets'
     ]
 
     T = sc.timer()  # Start a timer
@@ -313,7 +309,8 @@ if __name__ == '__main__':
         sim.plot()  # Plot the simulation
 
     if 'get_behavior' in to_run:
-        calib_pars = sc.loadobj('results/nigeria_pars.obj')
+        # calib_pars = sc.loadobj('results/nigeria_pars.obj')
+        calib_pars = None
         sim, afs_df, pm_df, agediff_df, casual_df = get_sb_from_sims(calib_pars=calib_pars)
 
     if 'run_calib' in to_run:
