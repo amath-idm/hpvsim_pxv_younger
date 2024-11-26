@@ -17,6 +17,16 @@ def set_font(size=None, font='Libertinus Sans'):
     return
 
 
+def shrink_calib(calib, n_results=100):
+    cal = sc.objdict()
+    plot_indices = calib.df.iloc[0:n_results, 0].values
+    cal.sim_results = [calib.sim_results[i] for i in plot_indices]
+    cal.analyzer_results = [calib.analyzer_results[i] for i in plot_indices]
+    cal.target_data = calib.target_data
+    cal.df = calib.df.iloc[0:n_results, ]
+    return cal
+
+
 def lognorm_params(par1, par2):
     """
     Given the mean and std. dev. of the log-normal distribution, this function

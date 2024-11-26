@@ -118,7 +118,7 @@ def plot_calib(calib, res_to_plot=100):
     sns.lineplot(ax=ax, x='bins', y='values', data=modeldf, color=canc_col, errorbar=('pi', 95))
     ax.scatter(x, best, marker='d', s=ms, color='k')
 
-    ax.set_ylim([0, 4_000])
+    ax.set_ylim([0, 2_500])
     ax.set_xticks(x, age_labels)
     sc.SIticks(ax)
     ax.set_ylabel('')
@@ -166,7 +166,7 @@ def plot_calib(calib, res_to_plot=100):
 if __name__ == '__main__':
 
     location = 'india'
-    calib = sc.loadobj(f'results/nigeria_calib.obj')
+    calib = sc.loadobj(f'results/nigeria_calib_reduced.obj')
     plot_calib(calib)
 
     print('Done.') 

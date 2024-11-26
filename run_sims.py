@@ -69,14 +69,14 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
             # Share of people of each age who are married
             [0, 5, 10,    15,     20,     25,     30,     35,     40,     45,   50,   55,   60,   65,    70,   75],
             # [0, 0,  0,  0.1596, 0.4466, 0.5845, 0.6139, 0.6202, 0.6139, 0.5726, 0.35, 0.21, 0.14, 0.07, 0.035, 0.007],
-            [0, 0,  0,  0.15,     0.15,    0.15,    0.15,    0.15,   0.2,    0.3,  0.4,  0.4,  0.2, 0.07, 0.035, 0.007],
-            [0, 0,  0,  0.20,     0.15,    0.15,    0.15,    0.2,    0.2,    0.4,  0.4,  0.4,  0.2,  0.1,  0.05, 0.01 ],
+            [0, 0,  0,  0.1,     0.1,    0.15,    0.15,    0.15,   0.2,    0.3,  0.4,  0.4,  0.2, 0.07, 0.035, 0.007],
+            [0, 0,  0,  0.1,     0.1,    0.15,    0.15,    0.2,    0.2,    0.4,  0.4,  0.4,  0.2,  0.1,  0.05, 0.01 ],
         ]),
         c=np.array([
             # Share of people of each age in casual partnerships
             [0, 5,  10,  15,  20,  25,  30,  35,    40,   45,   50,   55,   60,   65,   70,   75],
-            [0,  0, 0.2, 0.6, 0.6, 0.6, 0.4, 0.4,  0.4,  0.1, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
-            [0,  0, 0.2, 0.6, 0.8, 0.6, 0.6, 0.8, 0.95, 0.95, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
+            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5,  0.5,  0.3, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
+            [0,  0, 0.2, 0.5, 0.7, 0.6, 0.6, 0.8, 0.95, 0.95, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
         ])
     )
 
@@ -309,8 +309,8 @@ if __name__ == '__main__':
         sim.plot()  # Plot the simulation
 
     if 'get_behavior' in to_run:
-        # calib_pars = sc.loadobj('results/nigeria_pars.obj')
-        calib_pars = None
+        calib_pars = sc.loadobj('results/nigeria_pars.obj')
+        # calib_pars = None
         sim, afs_df, pm_df, agediff_df, casual_df = get_sb_from_sims(calib_pars=calib_pars)
 
     if 'run_calib' in to_run:
@@ -318,6 +318,8 @@ if __name__ == '__main__':
 
     if 'plot_calib' in to_run:
         calib = plot_calib(save_pars=True, filestem='')
+        calib = ut.shrink_calib(calib, n_results=200)
+        sc.saveobj(f'results/nigeria_calib_reduced.obj', calib)
 
     if 'run_parsets' in to_run:
         msim = run_parsets()
