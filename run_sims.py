@@ -57,9 +57,13 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
     #   Prop_active: 3.1, 14.5, 30.1, 51.9, 70.1
     # For fitting, see https://www.researchsquare.com/article/rs-3074559/v1
     pars.debut = dict(
-        f=dict(dist='lognormal', par1=17.41, par2=2.75),
-        m=dict(dist='lognormal', par1=17.91, par2=2.83),
+        f=dict(dist='lognormal', par1=15., par2=2.5),
+        m=dict(dist='lognormal', par1=18., par2=3.0),
     )
+    # pars.debut = dict(
+    #     f=dict(dist='lognormal', par1=17.41, par2=2.75),
+    #     m=dict(dist='lognormal', par1=17.91, par2=2.83),
+    # )
 
     # Participation in marital and casual relationships
     # Derived to fit 2018 DHS data
