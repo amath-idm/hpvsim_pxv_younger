@@ -100,7 +100,7 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
 
 
 # %% Simulation running functions
-def run_sim(calib_pars=None, analyzers=None, debug=debug, datafile=None, seed=1, verbose=.1, do_shrink=do_shrink, do_save=do_save, end=None):
+def run_sim(calib_pars=None, analyzers=None, debug=debug, datafile=None, seed=1, verbose=.1, do_shrink=do_shrink, do_save=do_save, end=2020):
     # Make sim
     sim = make_sim(
         debug=debug,
@@ -161,7 +161,6 @@ def run_calib(n_trials=None, n_workers=None, do_save=True, filestem=''):
         sev_dist=dict(par1=[1, 0.5, 1.5, 0.01])
     )
 
-
     calib = hpv.Calibration(sim, calib_pars=calib_pars, genotype_pars=genotype_pars,
                             name=f'nigeria_calib',
                             datafiles=datafiles,
@@ -178,13 +177,14 @@ def run_calib(n_trials=None, n_workers=None, do_save=True, filestem=''):
     return sim, calib
 
 
-def get_sb_from_sims(verbose=-1, debug=False):
+def get_sb_from_sims(verbose=-1, calib_pars=None, debug=False):
     '''
     Run sims with the sexual debut parameters inferred from DHS data, and save
     the proportion of people of each age who've ever had sex
     '''
 
     sim = run_sim(
+        calib_pars=calib_pars,
         analyzers=[ut.AFS(), ut.prop_married(), hpv.snapshot(timepoints=['2020'])],
         debug=debug,
         verbose=verbose,
@@ -296,21 +296,21 @@ if __name__ == '__main__':
         # 'run_sim',
         # 'get_behavior',
         # 'plot_behavior',
-        'run_calib',
+        # 'run_calib',
         # 'plot_calib'
-        # 'run_parsets'
+        'run_parsets'
     ]
 
     T = sc.timer()  # Start a timer
 
     if 'run_sim' in to_run:
-        # calib_pars = sc.loadobj('results/nigeria_pars.obj')  # Load parameters from a previous calibration
-        calib_pars = None
+        calib_pars = sc.loadobj('results/nigeria_pars.obj')  # Load parameters from a previous calibration
         sim = run_sim(calib_pars=calib_pars, do_save=False, do_shrink=True)  # Run the simulation
         sim.plot()  # Plot the simulation
 
     if 'get_behavior' in to_run:
-        sim, afs_df, pm_df, agediff_df, casual_df = get_sb_from_sims()
+        calib_pars = sc.loadobj('results/nigeria_pars.obj')
+        sim, afs_df, pm_df, agediff_df, casual_df = get_sb_from_sims(calib_pars=calib_pars)
 
     if 'run_calib' in to_run:
         sim, calib = run_calib(n_trials=n_trials, n_workers=n_workers, filestem='', do_save=True)
