@@ -75,8 +75,8 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
         c=np.array([
             # Share of people of each age in casual partnerships
             [0, 5,  10,  15,  20,  25,  30,  35,    40,   45,   50,   55,   60,   65,   70,   75],
-            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5,  0.5,  0.6, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
-            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02]
+            [0,  0, 0.2, 0.4, 0.4, 0.4, 0.4, 0.4,  0.7,  0.7, 0.6, 0.2, 0.1, 0.02, 0.02, 0.02],
+            [0,  0, 0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.5, 0.6, 0.5, 0.2, 0.02, 0.02, 0.02, 0.02]
         ])
     )
 
@@ -296,9 +296,9 @@ if __name__ == '__main__':
     to_run = [
         # 'run_sim',
         # 'get_behavior',
-        # 'run_calib',
+        'run_calib',
         # 'plot_calib'
-        'run_parsets'
+        # 'run_parsets'
     ]
 
     T = sc.timer()  # Start a timer
