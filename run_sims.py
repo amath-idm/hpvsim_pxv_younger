@@ -18,7 +18,7 @@ debug = 0  # Run with smaller population sizes and in serial
 do_shrink = True  # Do not keep people when running sims (saves memory)
 
 # Run settings
-n_trials    = [5000, 2][debug]  # How many trials to run for calibration
+n_trials    = [4000, 2][debug]  # How many trials to run for calibration
 n_workers   = [50, 1][debug]    # How many cores to use
 # storage     = ["mysql://hpvsim_user@localhost/hpvsim_newdb", None][debug]  # Storage for calibrations
 storage = None
@@ -75,8 +75,8 @@ def make_sim(location='nigeria', calib_pars=None, debug=0, interventions=None, a
         c=np.array([
             # Share of people of each age in casual partnerships
             [0, 5,  10,  15,  20,  25,  30,  35,    40,   45,   50,   55,   60,   65,   70,   75],
-            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5,  0.5,  0.3, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
-            [0,  0, 0.2, 0.5, 0.7, 0.6, 0.6, 0.8, 0.95, 0.95, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
+            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5,  0.5,  0.6, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
+            [0,  0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02]
         ])
     )
 
@@ -296,9 +296,9 @@ if __name__ == '__main__':
     to_run = [
         # 'run_sim',
         # 'get_behavior',
-        # 'run_calib',
+        'run_calib',
         # 'plot_calib'
-        'run_parsets'
+        # 'run_parsets'
     ]
 
     T = sc.timer()  # Start a timer
