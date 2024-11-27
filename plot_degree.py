@@ -42,7 +42,7 @@ def plot_degree(partners):
 # %% Run as a script
 if __name__ == '__main__': 
 
-    do_run = False
+    do_run = True
 
     if do_run:
         calib_pars = sc.loadobj('results/nigeria_pars.obj')
