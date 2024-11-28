@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
         if do_process:
 
-            metrics = ['year', 'asr_cancer_incidence', 'cancers', 'cancer_deaths']
+            metrics = ['year', 'asr_cancer_incidence', 'n_precin_by_age', 'n_females_alive_by_age', 'cancers', 'cancer_deaths']
 
             # Process results
             vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
@@ -240,6 +240,6 @@ if __name__ == '__main__':
 
                 msim_dict[scen_label] = mres
 
-            sc.saveobj(f'results/vx_scens.obj', msim_dict)
+            sc.saveobj(f'results/vx_scens_{efficacy_scen}.obj', msim_dict)
 
     print('Done.')
