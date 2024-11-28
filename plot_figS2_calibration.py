@@ -160,7 +160,6 @@ def plot_calib(calib, res_to_plot=100):
 # %% Run as a script
 if __name__ == '__main__':
 
-    location = 'india'
     calib = sc.loadobj(f'results/nigeria_calib_reduced.obj')
     plot_calib(calib)
 
