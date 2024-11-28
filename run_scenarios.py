@@ -22,7 +22,7 @@ import sciris as sc
 import hpvsim as hpv
 
 # Imports from this repository
-import run_sim as rs
+import run_sims as rs
 
 # Settings - used here and imported elsewhere
 debug = 0

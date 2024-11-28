@@ -12,8 +12,6 @@ import sciris as sc
 import utils as ut
 import seaborn as sns
 
-import run_sim as rs
-
 
 # %% Functions
 
