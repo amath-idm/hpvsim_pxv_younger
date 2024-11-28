@@ -234,9 +234,6 @@ if __name__ == '__main__':
             for si, scen_label in enumerate(scen_labels):
                 reduced_sim = mlist[si].reduce(output=True)
                 mres = sc.objdict({metric: reduced_sim.results[metric] for metric in metrics})
-                mres['dalys'] = reduced_sim.get_analyzer().dalys
-                mres['daly_years'] = reduced_sim.get_analyzer().years
-
                 for ii, intv in enumerate(reduced_sim['interventions']):
                     intv_label = intv.label
                     mres[intv_label] = reduced_sim['interventions'][ii].n_products_used
