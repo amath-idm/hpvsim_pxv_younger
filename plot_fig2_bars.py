@@ -1,5 +1,5 @@
 """
-Plot 2 and 3 for infant vaccination scenarios
+Plot 2: cumulative impact of infant vaccination scenarios
 """
 
 import pandas as pd
@@ -7,8 +7,7 @@ import sciris as sc
 from run_scenarios import coverage_arr, efficacy_arr
 import utils as ut
 import seaborn as sns
-import matplotlib.pyplot as plt
-import matplotlib.ticker as tkr
+import numpy as np
 
 
 def preprocess_data(msim_dict, cost_dict=None):
@@ -21,16 +20,11 @@ def preprocess_data(msim_dict, cost_dict=None):
     for cn, cov_val in enumerate(coverage_arr):
         base_label = f'Adolescent: {np.round(cov_val, decimals=1)} coverage'
         si = sc.findinds(msim_dict[base_label].year, start_year)[0]
-        di = sc.findinds(msim_dict[base_label].daly_years, start_year)[0]
-        # base_dalys = msim_dict[base_label].dalys[di:]
 
         for en, eff_val in enumerate(efficacy_arr):
             # cov_val = eff_val*0.9/0.95
             base_label = f'Adolescent: {np.round(cov_val, decimals=1)} coverage'
             scen_label = f'Infants: {np.round(eff_val, decimals=3)} efficacy'
-            # scen_dalys = msim_dict[scen_label].dalys[di:]
-            # dalys_averted = sum(base_dalys - scen_dalys)
-            # records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric':'DALYs', 'val': dalys_averted}
 
             for pn, metric in enumerate(metrics):
                 base_vals = msim_dict[base_label][metric].values[si:]

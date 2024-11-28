@@ -1,12 +1,9 @@
 """
-Plot calibration to India
+Plot calibration to Nigeria
 """
-import hpvsim as hpv
-import hpvsim.utils as hpu
-import hpvsim.parameters as hppar
+
 import pylab as pl
 import pandas as pd
-from scipy.stats import lognorm, norm
 import numpy as np
 import sciris as sc
 import utils as ut
@@ -156,7 +153,7 @@ def plot_calib(calib, res_to_plot=100):
         ax.set_title(rlabels[ai])
 
     fig.tight_layout()
-    pl.savefig(f"figures/figS3_calibration.png", dpi=300)
+    pl.savefig(f"figures/figS2_calibration.png", dpi=300)
 
     return
 

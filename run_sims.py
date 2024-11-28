@@ -184,6 +184,7 @@ def get_sb_from_sims(verbose=-1, calib_pars=None, debug=False):
     the proportion of people of each age who've ever had sex
     '''
 
+
     sim = run_sim(
         calib_pars=calib_pars,
         analyzers=[ut.AFS(), ut.prop_married(), hpv.snapshot(timepoints=['2020'])],
@@ -296,7 +297,8 @@ if __name__ == '__main__':
     to_run = [
         # 'run_sim',
         # 'get_behavior',
-        'run_calib',
+        'age_pyramids',
+        # 'run_calib',
         # 'plot_calib'
         # 'run_parsets'
     ]
@@ -312,6 +314,15 @@ if __name__ == '__main__':
         calib_pars = sc.loadobj('results/nigeria_pars.obj')
         # calib_pars = None
         sim, afs_df, pm_df, agediff_df, casual_df = get_sb_from_sims(calib_pars=calib_pars)
+
+    if 'age_pyramids' in to_run:
+        calib_pars = sc.loadobj('results/nigeria_pars.obj')
+        ap = hpv.age_pyramid(
+            timepoints=['2025', '2050', '2075', '2100'],
+            datafile='nigeria_age_pyramid.csv',
+            edges=np.linspace(0, 100, 21),
+        )
+        sim = run_sim(end=2100, calib_pars=calib_pars, analyzers=[ap], do_save=True, do_shrink=True)
 
     if 'run_calib' in to_run:
         sim, calib = run_calib(n_trials=n_trials, n_workers=n_workers, filestem='', do_save=True)

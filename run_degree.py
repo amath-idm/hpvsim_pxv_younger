@@ -1,6 +1,6 @@
 """
 Create file to store degree distribution of casual partners
-Option to plot, but generally this plot will be added to Figure S2
+Option to plot, but generally this plot will be added to Figure S1
 """
 import pylab as pl
 import utils as ut
