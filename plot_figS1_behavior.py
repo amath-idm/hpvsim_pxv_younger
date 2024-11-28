@@ -18,8 +18,8 @@ def plot_sb(dist_type='lognormal'):
     Create plots of sexual behavior inputs and outputs
     '''
 
-    ut.set_font(15)
-    fig = pl.figure(layout="tight", figsize=(11, 10))
+    ut.set_font(14)
+    fig = pl.figure(layout="tight", figsize=(12, 11))
 
     # Make 2 rows, with 3 panels in the top row and 2 in the bottom
     gs0 = fig.add_gridspec(2, 1)
@@ -110,7 +110,6 @@ def plot_sb(dist_type='lognormal'):
         stats += f"Std: {np.std(partners[sex]):.1f}\n"
         stats += f"%>20: {np.count_nonzero(partners[sex]>=20)/total*100:.2f}\n"
         ax.text(15, 0.5, stats)
-
 
     fig.tight_layout()
     pl.savefig(f"figures/figS1_nigeria_behavior.png", dpi=100)
