@@ -32,7 +32,7 @@ efficacy_dict = dict(
     all=np.arange(.5, 1, .1),
     equiv=0.95*coverage_arr/.9
 )
-efficacy_scen = 'equiv'
+efficacy_scen = 'all'
 efficacy_arr = efficacy_dict[efficacy_scen]
 
 
