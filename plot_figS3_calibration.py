@@ -158,7 +158,7 @@ def plot_calib(calib, res_to_plot=100):
         ax.set_title(rlabels[ai])
 
     fig.tight_layout()
-    pl.savefig(f"figures/figS2.png", dpi=300)
+    pl.savefig(f"figures/figS3_calibration.png", dpi=300)
 
     return
 

@@ -74,7 +74,7 @@ def plot_pops(years, percentages=True):
         ax.set_title(syear)
 
     fig.tight_layout()
-    sc.savefig(f'figures/figS3_age_pyramids.png', dpi=100)
+    sc.savefig(f'figures/figS2_age_pyramids.png', dpi=100)
 
 
 #%% Run as a script

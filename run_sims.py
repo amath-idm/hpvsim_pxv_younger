@@ -296,9 +296,9 @@ if __name__ == '__main__':
     to_run = [
         # 'run_sim',
         # 'get_behavior',
-        # 'run_calib',
+        'run_calib',
         # 'plot_calib'
-        'run_parsets'
+        # 'run_parsets'
     ]
 
     T = sc.timer()  # Start a timer

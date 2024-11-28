@@ -1,7 +1,7 @@
 """
-Plot degree distribution of casual partners
+Create file to store degree distribution of casual partners
+Option to plot, but generally this plot will be added to Figure S2
 """
-import hpvsim as hpv
 import pylab as pl
 import utils as ut
 import sciris as sc

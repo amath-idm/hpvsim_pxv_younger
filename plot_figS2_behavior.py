@@ -113,7 +113,7 @@ def plot_sb(dist_type='lognormal'):
 
 
     fig.tight_layout()
-    pl.savefig(f"figures/nigeria_behavior.png", dpi=100)
+    pl.savefig(f"figures/figS2_nigeria_behavior.png", dpi=100)
 
     return
 

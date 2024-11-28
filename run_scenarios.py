@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
     # Run scenarios (usually on VMs, runs n_seeds in parallel over M scenarios)
     if do_run:
-        calib_pars = sc.loadobj('results/nigeria_pars_nov13.obj')
+        calib_pars = sc.loadobj('results/nigeria_pars.obj')
         vx_scenarios = make_vx_scenarios(coverage_arr, efficacy_arr)
         msim = run_sims(calib_pars=calib_pars, vx_scenarios=vx_scenarios)
 
