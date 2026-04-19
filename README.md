@@ -1,45 +1,79 @@
-# Prophylactic HPV vaccination for infants
+# Prophylactic HPV vaccination for infants (Nigeria)
 
-This repository includes the code for analysing the impact of moving the HPV prophylactic vaccine to the infant series.
+Code for analysing the impact of moving the HPV prophylactic vaccine to the infant series.
 
-## Organization
-
-The repository is organized as follows:
-
-### Running scripts
-
-#### `run_sim.py`
- - This script does not need to be run directly, although it can be run if you want to see the baseline epidemic profile for Nigeria. The purpose of this script is to create the baseline simulation, which is then used as the basis for constructing the different vaccination scenarios.
-
- Note: this repository does not contain the scripts to produce the calibrated parameters. Instead, the calibrated parameters are stored in the `results` folder and loaded directly by this file to create the baseline sim.
-
-#### `run_scenarios.py`
-- This script sets up all the scenarios that will be created as part of this analysis (see `make_vx_scenarios`). It will generally take <5min to run on HPCs.
-
-#### `plot_fig1.py`
- - This script can be used to reproduce Figure 1.
-
-#### `plot_fig23.py` 
-- This script can be used to reproduce Figures 2 and 3.
-
-### Additional utility scripts
-- `utils.py` contains additional miscellaneous utilities for numerical calculations and creating plots.
-
-### Data and results
-- the contents of the `data` folder are not currently in use, but are kept here for completeness. These were used during the initial calibration of the model.
-- the `results` folder contains the outputs from running `run_scenarios`.
-
+**Results in this repository were produced with HPVsim v2.2.6.** Plot-ready baseline CSVs from the original (v2.0.x-era, Nov 2024) analysis live in [`results/v2.0.x_published/`](results/v2.0.x_published/); working CSVs for the current version live at the top of [`results/`](results/).
 
 ## Installation
 
-If HPVsim is already installed (`pip install hpvsim`), the only other required dependency is ``seaborn``.
+```bash
+pip install hpvsim==2.2.6 seaborn optuna
+```
 
+Python 3.9+.
 
-## Usage
+## Workflow: heavy sims on VM, plots locally
 
-Run the desired analyses by running one of the scripts described above.
+Each plot script has two modes: `--run-sim` runs the heavy calculation and saves lightweight CSVs in `results/`; running without flags loads the CSVs and produces the figure. The intended flow is:
 
+1. **VM:** `python plot_XXX.py --run-sim` → produces CSVs
+2. Commit & push from VM
+3. **Local:** `python plot_XXX.py` → renders the figure from CSVs
+
+Large binaries (`vs.msim`, full calibration objects, raw per-event CSVs) are gitignored — only plot-ready CSVs are committed.
+
+## Running scripts
+
+| Script | Figure | Heavy step | Key artifacts |
+|---|---|---|---|
+| `plot_fig2_bars.py` | Fig 2 — cancers/deaths averted by efficacy and coverage | `run_scenarios.py` with `efficacy_scen='all'` | `fig23_scens_all.csv` |
+| `plot_fig3_ts.py` | Fig 3 — time series comparing equivalent efficacy scenarios | `run_scenarios.py` with `efficacy_scen='equiv'` | `fig23_scens_equiv.csv` |
+| `plot_figS1_behavior.py` | Fig S1 — sexual behavior | `get_sb_from_sims()` + `run_degree.py` | `model_sb_AFS.csv`, `model_sb_prop_married.csv`, `model_age_diffs.csv`, `model_casual.csv`, `partners.csv` |
+| `plot_figS2_calibration.py` | Fig S2 — calibration | Full calibration (needs many trials) | `figS2_cancers_by_age.csv`, `figS2_cin_genotype_dist.csv`, `figS2_cancerous_genotype_dist.csv` + 3 target CSVs |
+| `plot_figS3_age_pyramids.py` | Fig S3 — age pyramids over time | Baseline sim with `age_pyramid` analyzer | `figS3_model.csv`, `figS3_data.csv` |
+| `plot_fig_lines.py` | Analytical efficacy/coverage lines | — | self-contained |
+
+## Heavy-step scripts
+
+- `run_sims.py`: sim-building, calibration, sexual-behavior extraction (`get_sb_from_sims`)
+- `run_scenarios.py`: full vaccination-scenario msim run; set `efficacy_scen = 'all'` or `'equiv'` at the top. Saves both `.obj` and `fig23_scens_*.csv`.
+- `run_degree.py`: casual-partner degree distribution extraction (saves `partners.csv`)
+
+## Baseline utilities
+
+- `save_baselines.py`: one-shot extractor that re-generates plot-ready CSVs from a set of source `.obj` files (e.g. the v2.0.x snapshot).
+
+## Adding a future-version baseline (v2.3, v3.0, ...)
+
+When a new HPVsim version ships, produce a frozen baseline for comparison:
+
+```bash
+# 1. On VM, in a clean environment pinned to the new version
+conda create -n hpvsim230 python=3.11 -y && conda activate hpvsim230
+pip install hpvsim==2.3.0 seaborn optuna
+# 2. Regenerate the CSVs (each script mode is heavy)
+python run_scenarios.py              # set efficacy_scen='all', then 'equiv', re-run
+python plot_figS1_behavior.py --run-sim
+python plot_figS2_calibration.py --run-sim
+python plot_figS3_age_pyramids.py --run-sim
+python run_degree.py
+# 3. Freeze into a versioned baseline dir (copy, don't move — keep working copy in results/)
+mkdir -p results/v2.3.0_baseline
+cp results/*.csv results/v2.3.0_baseline/
+# 4. Commit and push the baseline alongside an updated manifest.json.
+```
+
+Compare across versions by plotting from a baseline dir via `--resfolder`, e.g.
+`python plot_figS1_behavior.py --resfolder results/v2.0.x_published` vs. the
+default `results/` (current version). For side-by-side views, write a small
+comparison script that takes `--baselines` (see the `compare_fig2.py` pattern
+in [hpvsim_india](https://github.com/hpvsim/hpvsim_india)).
+
+## Inputs
+
+- `data/` — input data files (Nigeria cancer cases, cancer types, CIN types, HPV prevalence, age pyramid, ASR cancer, plus shared DHS files `afs_dist.csv`, `afs_median.csv`, `prop_married.csv` copied from the India repo).
+- `nigeria_age_pyramid.csv` at repo root — population pyramid data.
 
 ## Further information
 
-Further information on HPVsim is available [here](http://docs.hpvsim.org). If you have further questions or would like technical assistance, please reach out to us at info@hpvsim.org.
+See [hpvsim.org](https://hpvsim.org) and [docs.hpvsim.org](https://docs.hpvsim.org).

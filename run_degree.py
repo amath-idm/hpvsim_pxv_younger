@@ -54,6 +54,20 @@ if __name__ == '__main__':
             'm': sim.people.n_rships[1, m_conds],
         }
         sc.saveobj('results/partners.obj', partners)
+        import pandas as pd
+        bins = np.concatenate([np.arange(21), [100]])
+        rows = []
+        for sex, arr in partners.items():
+            arr = np.asarray(arr)
+            counts, _ = np.histogram(arr, bins=bins)
+            total = counts.sum()
+            summary = dict(mean=float(np.mean(arr)), median=float(np.median(arr)),
+                           std=float(np.std(arr)),
+                           pct_gt_20=float(np.count_nonzero(arr >= 20) / total * 100))
+            for bi, c in zip(bins[:-1], counts):
+                rows.append({'sex': sex, 'bin': int(bi), 'count': int(c),
+                             'probability': float(c / total), **summary})
+        pd.DataFrame(rows).to_csv('results/partners_hist.csv', index=False)
     else:
         partners = sc.loadobj('results/partners.obj')
 

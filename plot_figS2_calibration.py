@@ -1,166 +1,125 @@
 """
-Plot calibration to Nigeria
-"""
+Plot calibration to Nigeria.
 
-import pylab as pl
-import pandas as pd
+Two modes:
+  python plot_figS2_calibration.py --run-sim   # run calibration + extract CSVs (VM)
+  python plot_figS2_calibration.py             # plot from saved CSVs (local)
+"""
+import argparse
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import sciris as sc
-import utils as ut
 import seaborn as sns
 
+import run_sims as rs
+import utils as ut
 
-# %% Functions
 
-def plot_calib(calib, res_to_plot=100):
+def save_figS2_data(calib, res_to_plot=100, resfolder='results'):
+    n = min(res_to_plot, len(calib.analyzer_results))
 
+    per_trial = np.array([calib.analyzer_results[pos]['cancers'][2020] for pos in range(n)])
+    pd.DataFrame({
+        'bin': np.arange(per_trial.shape[1]),
+        'median': np.median(per_trial, axis=0),
+        'pi95_low': np.percentile(per_trial, 2.5, axis=0),
+        'pi95_high': np.percentile(per_trial, 97.5, axis=0),
+    }).to_csv(f'{resfolder}/figS2_cancers_by_age.csv', index=False)
+
+    for rkey in ['cin_genotype_dist', 'cancerous_genotype_dist']:
+        per_trial = []
+        for pos in range(n):
+            run = calib.sim_results[pos][rkey]
+            per_trial.append([run] if sc.isnumber(run) else list(run))
+        per_trial = np.array(per_trial)
+        rows = []
+        for bi in range(per_trial.shape[1]):
+            arr = per_trial[:, bi]
+            q1, med, q3 = np.percentile(arr, [25, 50, 75])
+            iqr = q3 - q1
+            lo = float(arr[arr >= q1 - 1.5 * iqr].min())
+            hi = float(arr[arr <= q3 + 1.5 * iqr].max())
+            rows.append({'bin': bi, 'q1': float(q1), 'med': float(med), 'q3': float(q3),
+                         'whislo': lo, 'whishi': hi})
+        pd.DataFrame(rows).to_csv(f'{resfolder}/figS2_{rkey}.csv', index=False)
+
+    for ti, name in enumerate(['cancers', 'cin_genotype', 'cancerous_genotype']):
+        if ti < len(calib.target_data):
+            calib.target_data[ti].to_csv(f'{resfolder}/figS2_target_{name}.csv', index=False)
+
+
+def plot_calib(resfolder='results', outpath='figures/figS2_calibration.png'):
     ut.set_font(size=24)
-    fig = pl.figure(layout="tight", figsize=(12, 11))
-    prev_col = '#5f5cd2'
+    fig = plt.figure(layout='tight', figsize=(12, 11))
     canc_col = '#c1981d'
     ms = 80
     gen_cols = sc.gridcolors(4)
 
-    # Make 2 rows, with 2 panels in the top row and 2 in the bottom
     gs0 = fig.add_gridspec(2, 1)
     gs00 = gs0[0].subgridspec(1, 1)
     gs01 = gs0[1].subgridspec(1, 2)
 
-    # Pull out the analyzer and sim results
-    analyzer_results = calib.analyzer_results
-    sim_results = calib.sim_results
-
-    # # ###############
-    # # # Panel A: HPV prevalence by age
-    # # ###############
-    # res = sc.loadobj(f'results/nigeria_msim.obj')
-    # year = 2020
-    # ind = sc.findinds(res['year'], year)[0]
-    #
-    # pre_cins = dict()
-    # ts = 1  #0.5  # detection rate / sensitivity
-    # for which in ['values', 'low', 'high']:
-    #     this_res = res['n_precin_by_age'][which][:, ind]
-    #     pre_cins[which] = [
-    #         sum(this_res[3:5]) / sum(res['n_females_alive_by_age'][3:5, ind]),
-    #         sum(this_res[5:7])*ts / sum(res['n_females_alive_by_age'][5:7, ind]),
-    #         sum(this_res[7:9])*ts / sum(res['n_females_alive_by_age'][7:9, ind]),
-    #         sum(this_res[9:11])*ts / sum(res['n_females_alive_by_age'][9:11, ind]),
-    #         sum(this_res[11:13])*ts / sum(res['n_females_alive_by_age'][11:13, ind]),
-    #         sum(this_res[13:])*ts / sum(res['n_females_alive_by_age'][13:, ind]),
-    #     ]
-    #
-    # ax = fig.add_subplot(gs01[:2])
-    #
-    # # Extract data
-    # # datadf = calib.target_data[0]
-    # # best = datadf.value.values
-    # age_labels = ['15-25', '25-34', '35-44', '45-54', '55-64', '65+']
-    # x = np.arange(len(age_labels))
-    # best = np.array([.30, .25, .25, .23, .23, .25])
-    #
-    # # Pull out lower and upper bounds from Figure 54 here: https://hpvcentre.net/statistics/reports/IND.pdf
-    # lowererr = np.array([0.08, 0.08, 0.08, 0.08, 0.08, 0.08 ])
-    # uppererr = np.array([0.08, 0.08, 0.08, 0.08, 0.08, 0.08 ])
-    # err = [lowererr, uppererr]
-    #
-    # # # Extract model results
-    # # bins = []
-    # # values = []
-    # # for run_num, run in enumerate(analyzer_results):
-    # #     bins += x.tolist()
-    # #     values += list(run['hpv_prevalence'][2020])
-    # # modeldf = pd.DataFrame({'bins': bins, 'values': values})
-    #
-    # # # Plot model
-    # # sns.lineplot(ax=ax, x='bins', y='values', data=modeldf, color=prev_col, errorbar=('pi', 95))
-    #
-    # # Plot model from msim:
-    # ax.plot(x, pre_cins['values'], color=prev_col)
-    # ax.fill_between(x, pre_cins['low'], pre_cins['high'], color=prev_col, alpha=0.3)
-    #
-    # # Plot data
-    # ax.errorbar(x, best, yerr=err, ls='none', marker='d', markersize=ms/10, color='k')
-    #
-    # # Axis sttings
-    # ax.set_ylim([0, 0.75])
-    # ax.set_xticks(x, age_labels)
-    # ax.set_ylabel('')
-    # ax.set_xlabel('Age')
-    # ax.set_title('Detectable HPV\n prevalence, 2020')
-    # # ax.set_title('Detectable HPV prevalence,\n normal cervical cytology, 2020')
-
-    ###############
-    # Panel B: Cancers by age
-    ###############
-    # ax = fig.add_subplot(gs01[0])
-    ax = fig.add_subplot(gs00[0])
-
-    # Data
-    datadf = calib.target_data[0]
+    # Panel A: Cancers by age, 2020
+    cancers_df = pd.read_csv(f'{resfolder}/figS2_cancers_by_age.csv')
+    target_cancers = pd.read_csv(f'{resfolder}/figS2_target_cancers.csv')
     age_labels = ['0', '15', '20', '25', '30', '35', '40', '45', '50', '55', '60', '65', '70', '75', '80', '85']
     x = np.arange(len(age_labels))
-    best = datadf.value.values
 
-    # Extract model results
-    bins = []
-    values = []
-    for run_num, run in enumerate(analyzer_results):
-        bins += x.tolist()
-        values += list(run['cancers'][2020])
-    modeldf = pd.DataFrame({'bins': bins, 'values': values})
-
-    sns.lineplot(ax=ax, x='bins', y='values', data=modeldf, color=canc_col, errorbar=('pi', 95))
-    ax.scatter(x, best, marker='d', s=ms, color='k')
-
+    ax = fig.add_subplot(gs00[0])
+    cancers_df = cancers_df.sort_values('bin')
+    ax.plot(cancers_df['bin'], cancers_df['median'], color=canc_col)
+    ax.fill_between(cancers_df['bin'], cancers_df['pi95_low'],
+                    cancers_df['pi95_high'], color=canc_col, alpha=0.3)
+    ax.scatter(x, target_cancers['value'].values, marker='d', s=ms, color='k')
     ax.set_ylim([0, 2_500])
     ax.set_xticks(x, age_labels)
     sc.SIticks(ax)
-    ax.set_ylabel('')
     ax.set_xlabel('Age')
     ax.set_title('Cancers by age, 2020')
 
-    # CINS and cancer by genotype
-    rkeys = ['cin_genotype_dist', 'cancerous_genotype_dist']
-    rlabels = ['HSILs', 'Cancers']  #['HSILs by genotype', 'Cancers by genotype']
-    for ai, rkey in enumerate(rkeys):
+    # Panels B, C: CIN + cancer by genotype
+    for ai, (rkey, target_name, rlabel) in enumerate([
+        ('cin_genotype_dist', 'cin_genotype', 'HSILs'),
+        ('cancerous_genotype_dist', 'cancerous_genotype', 'Cancers'),
+    ]):
         ax = fig.add_subplot(gs01[ai])
+        model_df = pd.read_csv(f'{resfolder}/figS2_{rkey}.csv')
+        target_df = pd.read_csv(f'{resfolder}/figS2_target_{target_name}.csv')
 
-        # Plot data
-        datadf = calib.target_data[ai+1]
-        ydata = datadf.value.values
-        x = np.arange(len(ydata))
-
-        # Extract model results
-        bins = []
-        values = []
-        for run_num, run in enumerate(sim_results):
-            bins += x.tolist()
-            if sc.isnumber(run[rkey]):
-                values += sc.promotetolist(run[rkey])
-            else:
-                values += run[rkey].tolist()
-        modeldf = pd.DataFrame({'bins': bins, 'values': values})
-
-        # Plot model
-        sns.boxplot(ax=ax, x='bins', y='values', data=modeldf, palette=gen_cols, showfliers=False)
-        ax.scatter(x, ydata, color='k', marker='d', s=ms)
-
+        model_df = model_df.sort_values('bin')
+        bxp_stats = [dict(med=r.med, q1=r.q1, q3=r.q3,
+                          whislo=r.whislo, whishi=r.whishi, fliers=[],
+                          label=str(int(r.bin))) for _, r in model_df.iterrows()]
+        bp = ax.bxp(bxp_stats, positions=model_df['bin'].values,
+                    patch_artist=True, showfliers=False, manage_ticks=False)
+        for patch, color in zip(bp['boxes'], gen_cols):
+            patch.set_facecolor(color)
+        ax.scatter(np.arange(len(target_df)), target_df['value'].values, color='k', marker='d', s=ms)
         ax.set_ylim([0, 1])
         ax.set_xticks(np.arange(4), ['16', '18', 'Hi5', 'OHR'])
-        ax.set_ylabel('')
-        ax.set_xlabel('')
-        ax.set_title(rlabels[ai])
+        ax.set_title(rlabel)
 
     fig.tight_layout()
-    pl.savefig(f"figures/figS2_calibration.png", dpi=300)
+    plt.savefig(outpath, dpi=300)
 
-    return
 
-# %% Run as a script
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--run-sim', action='store_true',
+                        help='Run calibration and save CSVs (heavy, VM-side)')
+    parser.add_argument('--resfolder', default='results/v2.0.x_published',
+                        help='Dir with plot-ready CSVs (for plot mode only)')
+    parser.add_argument('--outpath', default='figures/figS2_calibration.png')
+    parser.add_argument('--res-to-plot', type=int, default=100)
+    args = parser.parse_args()
 
-    calib = sc.loadobj(f'results/nigeria_calib_reduced.obj')
-    plot_calib(calib)
-
-    print('Done.') 
+    if args.run_sim:
+        sim, calib = rs.run_calib(n_trials=rs.n_trials, n_workers=rs.n_workers,
+                                  do_save=True, filestem='')
+        save_figS2_data(calib, res_to_plot=args.res_to_plot, resfolder='results')
+        print('Saved figS2 CSVs to results/ (copy to a versioned baseline dir to commit)')
+    else:
+        plot_calib(resfolder=args.resfolder, outpath=args.outpath)
+        print('Done.')

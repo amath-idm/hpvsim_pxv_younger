@@ -242,4 +242,28 @@ if __name__ == '__main__':
 
             sc.saveobj(f'results/vx_scens_{efficacy_scen}.obj', msim_dict)
 
+            # Also save plot-ready long-format CSV for cross-version comparison
+            import pandas as pd
+            rows = []
+            ts = 0.67
+            for scen_label, mres in msim_dict.items():
+                years = mres['year']
+                for metric in ['asr_cancer_incidence', 'cancers', 'cancer_deaths']:
+                    series = mres[metric]
+                    for yi, yr in enumerate(years):
+                        rows.append({
+                            'scenario': scen_label, 'year': float(yr), 'metric': metric,
+                            'value': float(series.values[yi]),
+                            'low': float(series.low[yi]), 'high': float(series.high[yi]),
+                        })
+                precin = mres['n_precin_by_age']
+                females = mres['n_females_alive_by_age']
+                for yi, yr in enumerate(years):
+                    val = precin.values[3:11, yi].sum() / females.values[3:11, yi].sum() * ts
+                    lo = precin.low[3:11, yi].sum() / females.low[3:11, yi].sum() * ts
+                    hi = precin.high[3:11, yi].sum() / females.high[3:11, yi].sum() * ts
+                    rows.append({'scenario': scen_label, 'year': float(yr),
+                                 'metric': 'precin_incidence', 'value': val, 'low': lo, 'high': hi})
+            pd.DataFrame(rows).to_csv(f'results/fig23_scens_{efficacy_scen}.csv', index=False)
+
     print('Done.')
