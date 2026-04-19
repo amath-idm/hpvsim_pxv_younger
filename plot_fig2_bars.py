@@ -1,75 +1,71 @@
 """
-Plot 2: cumulative impact of infant vaccination scenarios
-"""
+Fig 2: cumulative impact of infant vaccination scenarios.
 
+Plots from plot-ready CSV `fig23_scens_all.csv` produced by run_scenarios.py.
+"""
+import argparse
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import sciris as sc
-from run_scenarios import coverage_arr, efficacy_arr
-import utils as ut
 import seaborn as sns
-import numpy as np
+
+import utils as ut
+from run_scenarios import coverage_arr, efficacy_dict
 
 
-def preprocess_data(msim_dict, cost_dict=None):
-
-    # What to store
-    start_year = 2025
+def preprocess_data(scens_df, start_year=2025):
+    """Compute cancers/cancer_deaths averted vs adolescent-matched baseline."""
     metrics = ['cancers', 'cancer_deaths']
-    records = sc.autolist()
+    efficacy_arr = efficacy_dict['all']
+    records = []
 
     for cn, cov_val in enumerate(coverage_arr):
         base_label = f'Adolescent: {np.round(cov_val, decimals=1)} coverage'
-        si = sc.findinds(msim_dict[base_label].year, start_year)[0]
+        base = scens_df[(scens_df.scenario == base_label) & (scens_df.year >= start_year)]
 
         for en, eff_val in enumerate(efficacy_arr):
-            # cov_val = eff_val*0.9/0.95
-            base_label = f'Adolescent: {np.round(cov_val, decimals=1)} coverage'
             scen_label = f'Infants: {np.round(eff_val, decimals=3)} efficacy'
+            scen = scens_df[(scens_df.scenario == scen_label) & (scens_df.year >= start_year)]
 
-            for pn, metric in enumerate(metrics):
-                base_vals = msim_dict[base_label][metric].values[si:]
-                scen_vals = msim_dict[scen_label][metric].values[si:]
-                n_averted = sum(base_vals - scen_vals)
-                records += {'coverage': int(round(cov_val, 1)*100), 'efficacy': int(round(eff_val, 1)*100), 'metric': f'{metric.replace("_"," ").capitalize()}', 'val': n_averted}
+            for metric in metrics:
+                base_vals = base[base.metric == metric].sort_values('year')['value'].values
+                scen_vals = scen[scen.metric == metric].sort_values('year')['value'].values
+                n_averted = float((base_vals - scen_vals).sum())
+                records.append({
+                    'coverage': int(round(cov_val, 1) * 100),
+                    'efficacy': int(round(eff_val, 1) * 100),
+                    'metric': metric.replace('_', ' ').capitalize(),
+                    'val': n_averted,
+                })
+    return pd.DataFrame(records)
 
-    df = pd.DataFrame.from_dict(records)
 
-    return df
-
-
-def plot_fig2(df):
-
-    sns.set_style("whitegrid")
+def plot_fig2(df, outpath='figures/fig2_vx_impact.png'):
+    sns.set_style('whitegrid')
     ut.set_font(30)
     g = sns.catplot(
         data=df.loc[df.metric != 'cost'],
-        kind="bar",
-        x="efficacy",
-        y="val",
-        row="metric",
-        hue="coverage",
-        palette="rocket_r",
-        sharey=False,
+        kind='bar', x='efficacy', y='val', row='metric',
+        hue='coverage', palette='rocket_r', sharey=False,
         height=5, aspect=3,
     )
-    g.set_axis_labels("Vaccine efficacy for infants (%)", "")
-    g.set_titles("{row_name} averted")
-
+    g.set_axis_labels('Vaccine efficacy for infants (%)', '')
+    g.set_titles('{row_name} averted')
     for ax in g.axes.flat:
         sc.SIticks(ax)
-    g.legend.set_title("Adolescent\ncoverage (%)")
-
-    # fig.tight_layout()
-    fig_name = 'figures/fig2_vx_impact.png'
-    sc.savefig(fig_name, dpi=100)
-    return
+    g.legend.set_title('Adolescent\ncoverage (%)')
+    plt.savefig(outpath, dpi=100)
 
 
-# %% Run as a script
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--resfolder', default='results')
+    parser.add_argument('--outpath', default='figures/fig2_vx_impact.png')
+    args = parser.parse_args()
 
-    # Load scenarios and construct figure
-    msim_dict = sc.loadobj('results/vx_scens_all.obj')
-    df = preprocess_data(msim_dict)
-
-    plot_fig2(df)
+    scens_df = pd.read_csv(f'{args.resfolder}/fig23_scens_all.csv')
+    df = preprocess_data(scens_df)
+    plot_fig2(df, outpath=args.outpath)
+    print('Done.')

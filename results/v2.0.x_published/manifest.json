@@ -1,0 +1,13 @@
+{
+  "figures": [
+    "fig2",
+    "fig3",
+    "figS1",
+    "figS2",
+    "figS3"
+  ],
+  "source": "results/raw_v2/results",
+  "extracted_on_hpvsim_version": "2.2.6",
+  "date": "2026-04-18",
+  "note": "Source .obj files dated Nov 2024, likely hpvsim 2.0.x era."
+}

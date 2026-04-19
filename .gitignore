@@ -1,0 +1,25 @@
+# Migration: large sim outputs in versioned subdirs are regenerable, not committed
+# (plot-ready artifacts like .csv, .json, .npz should still be committed)
+raw_results/
+results/raw_v*/
+results/v*/*.obj
+results/v*/*.pkl
+results/v*/*.sim
+results/v*/*.msim
+
+# Zip archives
+results/*.zip
+
+# Full calib and big msim files — commit CSV extracts or smaller .obj files
+results/nigeria_calib.obj
+results/vs.msim
+results/vx_scens_all.obj
+results/vx_scens_equiv.obj
+
+# Plots regenerated locally from CSVs
+figures/
+
+# Python
+__pycache__/
+*.py[cod]
+.DS_Store

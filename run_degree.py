@@ -54,6 +54,9 @@ if __name__ == '__main__':
             'm': sim.people.n_rships[1, m_conds],
         }
         sc.saveobj('results/partners.obj', partners)
+        import pandas as pd
+        rows = [{'sex': s, 'partner_count': int(v)} for s, arr in partners.items() for v in arr]
+        pd.DataFrame(rows).to_csv('results/partners.csv', index=False)
     else:
         partners = sc.loadobj('results/partners.obj')
 
