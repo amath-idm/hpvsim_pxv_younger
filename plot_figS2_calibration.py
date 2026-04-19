@@ -20,20 +20,29 @@ import utils as ut
 def save_figS2_data(calib, res_to_plot=100, resfolder='results'):
     n = min(res_to_plot, len(calib.analyzer_results))
 
-    rows = []
-    for pos in range(n):
-        cancers = calib.analyzer_results[pos]['cancers'][2020]
-        for bi, val in enumerate(cancers):
-            rows.append({'trial_pos': pos, 'bin': bi, 'value': float(val)})
-    pd.DataFrame(rows).to_csv(f'{resfolder}/figS2_cancers_by_age.csv', index=False)
+    per_trial = np.array([calib.analyzer_results[pos]['cancers'][2020] for pos in range(n)])
+    pd.DataFrame({
+        'bin': np.arange(per_trial.shape[1]),
+        'median': np.median(per_trial, axis=0),
+        'pi95_low': np.percentile(per_trial, 2.5, axis=0),
+        'pi95_high': np.percentile(per_trial, 97.5, axis=0),
+    }).to_csv(f'{resfolder}/figS2_cancers_by_age.csv', index=False)
 
     for rkey in ['cin_genotype_dist', 'cancerous_genotype_dist']:
-        rows = []
+        per_trial = []
         for pos in range(n):
             run = calib.sim_results[pos][rkey]
-            arr = [run] if sc.isnumber(run) else list(run)
-            for bi, val in enumerate(arr):
-                rows.append({'trial_pos': pos, 'bin': bi, 'value': float(val)})
+            per_trial.append([run] if sc.isnumber(run) else list(run))
+        per_trial = np.array(per_trial)
+        rows = []
+        for bi in range(per_trial.shape[1]):
+            arr = per_trial[:, bi]
+            q1, med, q3 = np.percentile(arr, [25, 50, 75])
+            iqr = q3 - q1
+            lo = float(arr[arr >= q1 - 1.5 * iqr].min())
+            hi = float(arr[arr <= q3 + 1.5 * iqr].max())
+            rows.append({'bin': bi, 'q1': float(q1), 'med': float(med), 'q3': float(q3),
+                         'whislo': lo, 'whishi': hi})
         pd.DataFrame(rows).to_csv(f'{resfolder}/figS2_{rkey}.csv', index=False)
 
     for ti, name in enumerate(['cancers', 'cin_genotype', 'cancerous_genotype']):
@@ -59,7 +68,10 @@ def plot_calib(resfolder='results', outpath='figures/figS2_calibration.png'):
     x = np.arange(len(age_labels))
 
     ax = fig.add_subplot(gs00[0])
-    sns.lineplot(ax=ax, x='bin', y='value', data=cancers_df, color=canc_col, errorbar=('pi', 95))
+    cancers_df = cancers_df.sort_values('bin')
+    ax.plot(cancers_df['bin'], cancers_df['median'], color=canc_col)
+    ax.fill_between(cancers_df['bin'], cancers_df['pi95_low'],
+                    cancers_df['pi95_high'], color=canc_col, alpha=0.3)
     ax.scatter(x, target_cancers['value'].values, marker='d', s=ms, color='k')
     ax.set_ylim([0, 2_500])
     ax.set_xticks(x, age_labels)
@@ -76,7 +88,14 @@ def plot_calib(resfolder='results', outpath='figures/figS2_calibration.png'):
         model_df = pd.read_csv(f'{resfolder}/figS2_{rkey}.csv')
         target_df = pd.read_csv(f'{resfolder}/figS2_target_{target_name}.csv')
 
-        sns.boxplot(ax=ax, x='bin', y='value', data=model_df, palette=gen_cols, showfliers=False)
+        model_df = model_df.sort_values('bin')
+        bxp_stats = [dict(med=r.med, q1=r.q1, q3=r.q3,
+                          whislo=r.whislo, whishi=r.whishi, fliers=[],
+                          label=str(int(r.bin))) for _, r in model_df.iterrows()]
+        bp = ax.bxp(bxp_stats, positions=model_df['bin'].values,
+                    patch_artist=True, showfliers=False, manage_ticks=False)
+        for patch, color in zip(bp['boxes'], gen_cols):
+            patch.set_facecolor(color)
         ax.scatter(np.arange(len(target_df)), target_df['value'].values, color='k', marker='d', s=ms)
         ax.set_ylim([0, 1])
         ax.set_xticks(np.arange(4), ['16', '18', 'Hi5', 'OHR'])
@@ -90,7 +109,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-sim', action='store_true',
                         help='Run calibration and save CSVs (heavy, VM-side)')
-    parser.add_argument('--resfolder', default='results')
+    parser.add_argument('--resfolder', default='results/v2.0.x_published',
+                        help='Dir with plot-ready CSVs (for plot mode only)')
     parser.add_argument('--outpath', default='figures/figS2_calibration.png')
     parser.add_argument('--res-to-plot', type=int, default=100)
     args = parser.parse_args()
@@ -98,8 +118,8 @@ if __name__ == '__main__':
     if args.run_sim:
         sim, calib = rs.run_calib(n_trials=rs.n_trials, n_workers=rs.n_workers,
                                   do_save=True, filestem='')
-        save_figS2_data(calib, res_to_plot=args.res_to_plot, resfolder=args.resfolder)
-        print(f'Saved figS2 CSVs to {args.resfolder}')
+        save_figS2_data(calib, res_to_plot=args.res_to_plot, resfolder='results')
+        print('Saved figS2 CSVs to results/ (copy to a versioned baseline dir to commit)')
     else:
         plot_calib(resfolder=args.resfolder, outpath=args.outpath)
         print('Done.')

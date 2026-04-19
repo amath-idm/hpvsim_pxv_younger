@@ -110,7 +110,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-sim', action='store_true',
                         help='Run the sim and save sexual-behavior CSVs (VM-side)')
-    parser.add_argument('--resfolder', default='results')
+    parser.add_argument('--resfolder', default='results/v2.0.x_published',
+                        help='Dir with plot-ready CSVs (for plot mode only)')
     parser.add_argument('--outpath', default='figures/figS1_nigeria_behavior.png')
     args = parser.parse_args()
 

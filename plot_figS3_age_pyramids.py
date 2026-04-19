@@ -106,7 +106,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-sim', action='store_true',
                         help='Run baseline sim with age_pyramid analyzer (VM-side)')
-    parser.add_argument('--resfolder', default='results')
+    parser.add_argument('--resfolder', default='results/v2.0.x_published',
+                        help='Dir with plot-ready CSVs (for plot mode only)')
     parser.add_argument('--outpath', default='figures/figS3_age_pyramids.png')
     parser.add_argument('--years', nargs='+', default=['2025', '2050', '2075', '2100'])
     args = parser.parse_args()
@@ -120,8 +121,8 @@ if __name__ == '__main__':
             do_save=False,
             end=int(args.years[-1]),
         )
-        save_figS3_data(sim, resfolder=args.resfolder, years=args.years)
-        print(f'Saved figS3 CSVs to {args.resfolder}')
+        save_figS3_data(sim, resfolder='results', years=args.years)
+        print('Saved figS3 CSVs to results/ (copy to a versioned baseline dir to commit)')
     else:
         plot_pops(args.years, resfolder=args.resfolder, outpath=args.outpath)
         print('Done.')

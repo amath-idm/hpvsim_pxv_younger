@@ -19,6 +19,10 @@ results/vx_scens_equiv.obj
 # Plots regenerated locally from CSVs
 figures/
 
+# Top-level results/*.csv are transient VM-run outputs; commit frozen snapshots
+# under results/v<version>_baseline/ (or similar) instead.
+results/*.csv
+
 # Python
 __pycache__/
 *.py[cod]

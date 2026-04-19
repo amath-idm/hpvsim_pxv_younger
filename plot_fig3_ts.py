@@ -83,10 +83,10 @@ def plot_fig3(scens_df, outpath='figures/fig3_vx_scens.png'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--resfolder', default='results')
+    parser.add_argument('--resfolder', default='results/v2.0.x_published')
     parser.add_argument('--outpath', default='figures/fig3_vx_scens.png')
     args = parser.parse_args()
 
-    scens_df = pd.read_csv(f'{args.resfolder}/fig23_scens_equiv.csv')
+    scens_df = pd.read_csv(f'{args.resfolder}/fig3_scens.csv')
     plot_fig3(scens_df, outpath=args.outpath)
     print('Done.')
