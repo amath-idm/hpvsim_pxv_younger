@@ -20,13 +20,34 @@ from run_scenarios import coverage_arr, efficacy_dict
 
 # --- figS1: sexual behavior ---
 def save_figS1(src, dst):
-    for name in ['model_sb_AFS', 'model_sb_prop_married', 'model_age_diffs', 'model_casual']:
+    from scipy.stats import gaussian_kde
+
+    for name in ['model_sb_AFS', 'model_sb_prop_married', 'model_casual']:
         df = sc.loadobj(f'{src}/{name}.obj')
         df.to_csv(f'{dst}/{name}.csv', index=False)
 
+    # Age diffs as KDE grid (300 rows) instead of raw events (~18K)
+    age_df = sc.loadobj(f'{src}/model_age_diffs.obj')
+    arr = age_df.iloc[:, 0].values
+    kde = gaussian_kde(arr)
+    x = np.linspace(-15, 35, 300)
+    pd.DataFrame({'x': x, 'density': kde(x)}).to_csv(f'{dst}/age_diffs_kde.csv', index=False)
+
+    # Partners as histogram with summary stats (~42 rows) instead of raw counts (~49K)
     partners = sc.loadobj(f'{src}/partners.obj')
-    rows = [{'sex': s, 'partner_count': int(v)} for s, arr in partners.items() for v in arr]
-    pd.DataFrame(rows).to_csv(f'{dst}/partners.csv', index=False)
+    bins = np.concatenate([np.arange(21), [100]])
+    rows = []
+    for sex, arr in partners.items():
+        arr = np.asarray(arr)
+        counts, _ = np.histogram(arr, bins=bins)
+        total = counts.sum()
+        summary = dict(mean=float(np.mean(arr)), median=float(np.median(arr)),
+                       std=float(np.std(arr)),
+                       pct_gt_20=float(np.count_nonzero(arr >= 20) / total * 100))
+        for bi, c in zip(bins[:-1], counts):
+            rows.append({'sex': sex, 'bin': int(bi), 'count': int(c),
+                         'probability': float(c / total), **summary})
+    pd.DataFrame(rows).to_csv(f'{dst}/partners_hist.csv', index=False)
 
 
 # --- figS2: calibration (reduced) ---

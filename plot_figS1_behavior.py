@@ -74,37 +74,31 @@ def plot_sb(dist_type='lognormal', resfolder='results', outpath='figures/figS1_n
     ax.set_xlabel('Age')
     ax.set_title('(B) Share of females\n who are married')
 
-    # Panel C: age differences between partners
-    agediffs = pd.read_csv(f'{resfolder}/model_age_diffs.csv')
+    # Panel C: age differences between partners (precomputed KDE grid)
+    kde_df = pd.read_csv(f'{resfolder}/age_diffs_kde.csv')
     ax = fig.add_subplot(gs00[2])
-    sns.kdeplot(data=agediffs, color=colors[0], ax=ax)
-    ax.legend([], [], frameon=False)
+    ax.plot(kde_df['x'], kde_df['density'], color=colors[0])
     ax.set_xlim([-10, 30])
     ax.set_ylabel('Share')
     ax.set_xlabel('Male age - female age')
     ax.set_title('(C) Age differences\n between partners')
 
-    # Panels D, E: degree distribution
-    bins = np.concatenate([np.arange(21), [100]])
-    partners_df = pd.read_csv(f'{resfolder}/partners.csv')
+    # Panels D, E: degree distribution (precomputed histogram + summary stats)
+    partners_hist = pd.read_csv(f'{resfolder}/partners_hist.csv')
     axlabels = ['D', 'E']
-
     for ai, slabel in enumerate(['females', 'males']):
         s = slabel[0]
-        arr = partners_df.loc[partners_df['sex'] == s, 'partner_count'].values
-        counts, bins = np.histogram(arr, bins=bins)
-        total = counts.sum()
-        counts = counts / total
-
+        sub = partners_hist[partners_hist['sex'] == s].sort_values('bin')
         ax = fig.add_subplot(gs01[ai])
-        ax.bar(bins[:-1], counts)
+        ax.bar(sub['bin'].values, sub['probability'].values)
         ax.set_xlabel('Number of lifetime casual partners')
         ax.set_title(f'({axlabels[ai]}) Distribution of casual partners, {slabel}')
+        row = sub.iloc[0]
         stats = (
-            f'Mean: {np.mean(arr):.1f}\n'
-            f'Median: {np.median(arr):.1f}\n'
-            f'Std: {np.std(arr):.1f}\n'
-            f'%>20: {np.count_nonzero(arr >= 20) / total * 100:.2f}\n'
+            f'Mean: {row["mean"]:.1f}\n'
+            f'Median: {row["median"]:.1f}\n'
+            f'Std: {row["std"]:.1f}\n'
+            f'%>20: {row["pct_gt_20"]:.2f}\n'
         )
         ax.text(15, 0.5, stats)
 

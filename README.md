@@ -43,6 +43,32 @@ Large binaries (`vs.msim`, full calibration objects, raw per-event CSVs) are git
 
 - `save_baselines.py`: one-shot extractor that re-generates plot-ready CSVs from a set of source `.obj` files (e.g. the v2.0.x snapshot).
 
+## Adding a future-version baseline (v2.3, v3.0, ...)
+
+When a new HPVsim version ships, produce a frozen baseline for comparison:
+
+```bash
+# 1. On VM, in a clean environment pinned to the new version
+conda create -n hpvsim230 python=3.11 -y && conda activate hpvsim230
+pip install hpvsim==2.3.0 seaborn optuna
+# 2. Regenerate the CSVs (each script mode is heavy)
+python run_scenarios.py              # set efficacy_scen='all', then 'equiv', re-run
+python plot_figS1_behavior.py --run-sim
+python plot_figS2_calibration.py --run-sim
+python plot_figS3_age_pyramids.py --run-sim
+python run_degree.py
+# 3. Freeze into a versioned baseline dir (copy, don't move — keep working copy in results/)
+mkdir -p results/v2.3.0_baseline
+cp results/*.csv results/v2.3.0_baseline/
+# 4. Commit and push the baseline alongside an updated manifest.json.
+```
+
+Compare across versions by plotting from a baseline dir via `--resfolder`, e.g.
+`python plot_figS1_behavior.py --resfolder results/v2.0.x_published` vs. the
+default `results/` (current version). For side-by-side views, write a small
+comparison script that takes `--baselines` (see the `compare_fig2.py` pattern
+in [hpvsim_india](https://github.com/hpvsim/hpvsim_india)).
+
 ## Inputs
 
 - `data/` — input data files (Nigeria cancer cases, cancer types, CIN types, HPV prevalence, age pyramid, ASR cancer, plus shared DHS files `afs_dist.csv`, `afs_median.csv`, `prop_married.csv` copied from the India repo).

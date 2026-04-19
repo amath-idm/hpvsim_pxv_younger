@@ -217,7 +217,11 @@ def get_sb_from_sims(verbose=-1, calib_pars=None, debug=False):
     ppl = snapshot.snapshots[0]
     age_diffs = ppl.contacts['m']['age_m'] - ppl.contacts['m']['age_f']
     agediff_df['age_diffs'] = age_diffs
-    agediff_df.to_csv(f'results/model_age_diffs.csv', index=False)
+    # Save age-differences as a precomputed KDE grid (300 rows) instead of raw events
+    from scipy.stats import gaussian_kde
+    kde = gaussian_kde(np.asarray(age_diffs))
+    x = np.linspace(-15, 35, 300)
+    pd.DataFrame({'x': x, 'density': kde(x)}).to_csv('results/age_diffs_kde.csv', index=False)
 
     # Save output on the number of casual relationships
     binspan = 5
