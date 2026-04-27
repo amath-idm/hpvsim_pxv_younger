@@ -32,7 +32,7 @@ efficacy_dict = dict(
     all=np.arange(.5, 1, .1),
     equiv=0.95*coverage_arr/.9
 )
-efficacy_scen = 'all' # 'equiv'
+efficacy_scen = 'equiv' # 'all'
 efficacy_arr = efficacy_dict[efficacy_scen]
 
 
@@ -68,9 +68,9 @@ def make_st(screen_coverage=0.15, treat_coverage=0.7, start_year=2020):
     )
 
     ablation_eligible = lambda sim: sim.get_intervention('tx assigner').outcomes['ablation']
+    # v2.3: treat_num doesn't accept annual_prob (only screening/triage/vx do)
     ablation = hpv.treat_num(
         prob=treat_coverage,
-        annual_prob=False,
         product='ablation',
         eligibility=ablation_eligible,
         label='ablation'
@@ -80,7 +80,6 @@ def make_st(screen_coverage=0.15, treat_coverage=0.7, start_year=2020):
                                              sim.get_intervention('ablation').outcomes['unsuccessful'].tolist()))
     excision = hpv.treat_num(
         prob=treat_coverage,
-        annual_prob=False,
         product='excision',
         eligibility=excision_eligible,
         label='excision'
@@ -89,7 +88,6 @@ def make_st(screen_coverage=0.15, treat_coverage=0.7, start_year=2020):
     radiation_eligible = lambda sim: sim.get_intervention('tx assigner').outcomes['radiation']
     radiation = hpv.treat_num(
         prob=treat_coverage/4,  # assume an additional dropoff in CaTx coverage
-        annual_prob=False,
         product=hpv.radiation(),
         eligibility=radiation_eligible,
         label='radiation'
@@ -106,7 +104,9 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
     catchup_age = (age_range[0]+1, age_range[1])
     routine_age = (age_range[0], age_range[0]+1)
     prod = hpv.default_vx(prod_name=product)
-    prod.imm_init = dict(dist='beta_mean', par1=0.95, par2=0.025)
+    # v2.3 vx requires scalar imm_init (sterilizing probability); was
+    # dict(dist='beta_mean', par1=0.95, par2=0.025) — par1 is the mean.
+    prod.imm_init = 0.95
     eligibility = lambda sim: (sim.people.doses == 0)
 
     vx_scenarios = dict()
@@ -162,7 +162,9 @@ def make_vx_scenarios(coverage_arr, efficacy_arr, product='nonavalent', start_ye
         )
 
         infant_prod = hpv.default_vx(prod_name=product)
-        infant_prod.imm_init = dict(dist='beta_mean', par1=eff_val, par2=0.025)
+        # v2.3 vx requires scalar imm_init (sterilizing probability); was
+        # dict(dist='beta_mean', par1=eff_val, par2=0.025) — par1 is the mean.
+        infant_prod.imm_init = eff_val
         infant_vx = hpv.routine_vx(
             prob=0.9,
             start_year=start_year,

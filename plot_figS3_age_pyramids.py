@@ -117,7 +117,7 @@ if __name__ == '__main__':
         calib_pars = sc.loadobj(f'{args.resfolder}/nigeria_pars.obj')
         sim = rs.run_sim(
             calib_pars=calib_pars,
-            analyzers=[hpv.age_pyramid(timepoints=args.years, datafile='data/nigeria_age_pyramid.csv')],
+            analyzers=[hpv.age_pyramid(timepoints=args.years, edges=np.arange(0, 81, 10), datafile='data/nigeria_age_pyramid_reduced.csv')],
             do_save=False,
             end=int(args.years[-1]),
         )
